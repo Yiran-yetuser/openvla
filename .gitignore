@@ -151,3 +151,17 @@ data/
 # Rollout videos and wandb logs
 rollouts/
 wandb/
+
+# Local experiment outputs
+runs/
+adapter-tmp/
+libero_compare_100samples/
+libero_compare_results/
+
+# Local result files
+*_action_results.csv
+planB*.csv
+
+# Local scratch files
+test_image.jpg
+*.bak*
