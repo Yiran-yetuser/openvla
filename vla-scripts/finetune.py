@@ -182,7 +182,15 @@ def finetune(cfg: FinetuneConfig) -> None:
         vla.print_trainable_parameters()
 
     # Wrap VLA in PyTorch DDP Wrapper for Multi-GPU Training
-    vla = DDP(vla, device_ids=[device_id], find_unused_parameters=True, gradient_as_bucket_view=True)
+    # 原始代码：单 GPU 运行时也无条件创建 DDP，会因为进程组未初始化而失败。
+    # vla = DDP(vla, device_ids=[device_id], find_unused_parameters=True, gradient_as_bucket_view=True)
+
+    # 修改原因：只有 torchrun 初始化了分布式进程组时才使用 DDP，兼容单 GPU 训练。
+    if dist.is_initialized():
+        vla = DDP(vla, device_ids=[device_id], find_unused_parameters=True, gradient_as_bucket_view=True)
+
+    # 修改原因：DDP 模式下模型位于 vla.module，单 GPU 模式下模型本身就是 vla。
+    vla_raw = vla.module if hasattr(vla, "module") else vla
 
     # Create Optimizer =>> note that we default to a simple constant learning rate!
     trainable_params = [param for param in vla.parameters() if param.requires_grad]
@@ -216,7 +224,9 @@ def finetune(cfg: FinetuneConfig) -> None:
         cfg.data_root_dir,
         cfg.dataset_name,
         batch_transform,
-        resize_resolution=tuple(vla.module.config.image_sizes),
+        # 原始代码：resize_resolution=tuple(vla.module.config.image_sizes)
+        # 修改原因：单 GPU 模式没有 vla.module，因此统一从实际模型对象读取配置。
+        resize_resolution=tuple(vla_raw.config.image_sizes),
         shuffle_buffer_size=cfg.shuffle_buffer_size,
         image_aug=cfg.image_aug,
     )
@@ -267,7 +277,9 @@ def finetune(cfg: FinetuneConfig) -> None:
             normalized_loss.backward()
 
             # Compute Accuracy and L1 Loss for Logging
-            action_logits = output.logits[:, vla.module.vision_backbone.featurizer.patch_embed.num_patches : -1]
+            # 原始代码：action_logits = output.logits[:, vla.module.vision_backbone.featurizer.patch_embed.num_patches : -1]
+            # 修改原因：单 GPU 模式没有 vla.module，使用 vla_raw 兼容 DDP 和单 GPU。
+            action_logits = output.logits[:, vla_raw.vision_backbone.featurizer.patch_embed.num_patches : -1]
             action_preds = action_logits.argmax(dim=2)
             action_gt = batch["labels"][:, 1:].to(action_preds.device)
             mask = action_gt > action_tokenizer.action_token_begin_idx
@@ -327,10 +339,15 @@ def finetune(cfg: FinetuneConfig) -> None:
 
                     # Save Processor & Weights
                     processor.save_pretrained(run_dir)
-                    vla.module.save_pretrained(save_dir)
+                    # 原始代码：vla.module.save_pretrained(save_dir)
+                    # 修改原因：保存 adapter 时也需要兼容单 GPU 模式，不能固定访问 vla.module。
+                    vla_raw.save_pretrained(save_dir)
 
                 # Wait for processor and adapter weights to be saved by main process
-                dist.barrier()
+                # 原始代码：dist.barrier()
+                # 修改原因：单 GPU 模式没有分布式进程组，只有 DDP 模式才需要同步进程。
+                if dist.is_initialized():
+                    dist.barrier()
 
                 # Merge LoRA weights into model backbone for faster inference
                 #   =>> Note that merging is slow and can be done post-hoc to speed up training
@@ -361,7 +378,10 @@ def finetune(cfg: FinetuneConfig) -> None:
                             print(f"Saved Model Checkpoint for Step {gradient_step_idx} at: {checkpoint_dir}")
 
                 # Block on Main Process Checkpointing
-                dist.barrier()
+                # 原始代码：dist.barrier()
+                # 修改原因：合并模型和保存 checkpoint 后，仅在分布式训练中等待所有进程完成。
+                if dist.is_initialized():
+                    dist.barrier()
 
             # Stop training when max_steps is reached
             if gradient_step_idx == cfg.max_steps:
