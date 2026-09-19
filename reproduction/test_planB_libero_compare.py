@@ -21,23 +21,24 @@ from peft import PeftModel
 # ============================================================
 
 MODEL_ID = "openvla/openvla-7b"
+REPO_DIR = Path(__file__).resolve().parent.parent
 
-IMAGE_PATH = "/home/yyz/openvla/test_image.jpg"
+IMAGE_PATH = REPO_DIR / "test_image.jpg"
 
 ADAPTER_PATH = (
-    "/home/yyz/openvla/adapter-tmp/libero_spatial_1000step/"
+    REPO_DIR / "adapter-tmp/libero_spatial_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug"
 )
 
 STATS_PATH = (
-    "/home/yyz/openvla/runs/libero_spatial_1000step/"
+    REPO_DIR / "runs/libero_spatial_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug/"
     "dataset_statistics.json"
 )
 
-OUTPUT_CSV = "/home/yyz/openvla/planB_libero_compare.csv"
+OUTPUT_CSV = REPO_DIR / "planB_libero_compare.csv"
 
 DATASET_KEY = "libero_spatial_no_noops"
 

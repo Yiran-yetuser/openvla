@@ -3,11 +3,11 @@ import subprocess
 import sys
 from pathlib import Path
 
-REPO_DIR = Path(__file__).resolve().parent
+REPO_DIR = Path(__file__).resolve().parent.parent
 MODEL_DIR = (
     Path.home() / ".cache/huggingface/hub/models--openvla--openvla-7b/snapshots/47a0ec7fc4ec123775a391911046cf33cf9ed83f"
 )
-LOG_FILE = REPO_DIR / "finetune_1000step.log"
+LOG_FILE = REPO_DIR / "reproduction" / "finetune_1000step.log"
 
 
 def main() -> int:

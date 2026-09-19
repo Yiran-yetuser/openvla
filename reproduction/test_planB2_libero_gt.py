@@ -2,6 +2,7 @@ import os
 import csv
 import glob
 import random
+from pathlib import Path
 import numpy as np
 import tensorflow as tf
 import torch
@@ -18,23 +19,27 @@ from peft import PeftModel
 # ============================================================
 
 MODEL_ID = "openvla/openvla-7b"
+REPO_DIR = Path(__file__).resolve().parent.parent
 
-DATA_DIR = "/home/yyz/modified_libero_rlds/libero_spatial_no_noops/1.0.0"
+DATA_DIR = os.environ.get(
+    "LIBERO_DATA_DIR",
+    str(Path.home() / "modified_libero_rlds/libero_spatial_no_noops/1.0.0"),
+)
 
 ADAPTER_DIR = (
-    "/home/yyz/openvla/adapter-tmp/libero_spatial_1000step/"
+    REPO_DIR / "adapter-tmp/libero_spatial_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug"
 )
 
 STATS_FILE = (
-    "/home/yyz/openvla/runs/libero_spatial_1000step/"
+    REPO_DIR / "runs/libero_spatial_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug/"
     "dataset_statistics.json"
 )
 
-OUTPUT_CSV = "/home/yyz/openvla/planB2_libero_gt.csv"
+OUTPUT_CSV = REPO_DIR / "planB2_libero_gt.csv"
 
 NUM_SAMPLES = 50
 SEED = 42

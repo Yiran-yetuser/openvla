@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import torch
 from PIL import Image
 from transformers import (
@@ -9,9 +10,10 @@ from transformers import (
 from peft import PeftModel
 
 BASE_MODEL = "openvla/openvla-7b"
+REPO_DIR = Path(__file__).resolve().parent.parent
 
-ADAPTER = os.path.expanduser(
-    "~/openvla/adapter-tmp/libero_spatial_1000step/"
+ADAPTER = str(
+    REPO_DIR / "adapter-tmp/libero_spatial_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug"
 )
@@ -93,7 +95,7 @@ for name, cfg in model.peft_config.items():
 
 print("\n[5/5] Running one inference...")
 
-image = Image.open("test.jpg").convert("RGB")
+image = Image.open(REPO_DIR / "test.jpg").convert("RGB")
 
 prompt = "In: What action should the robot take to pick up the object?\nOut:"
 
