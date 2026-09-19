@@ -15,7 +15,6 @@ from transformers import (
 )
 from peft import PeftModel
 
-
 # ============================================================
 # Configuration
 # ============================================================
@@ -63,6 +62,7 @@ INSTRUCTIONS = [
 # Utility
 # ============================================================
 
+
 def print_vram(tag):
     if not torch.cuda.is_available():
         return
@@ -71,12 +71,7 @@ def print_vram(tag):
     reserved = torch.cuda.memory_reserved() / 1024**3
     peak = torch.cuda.max_memory_allocated() / 1024**3
 
-    print(
-        f"[VRAM] {tag}: "
-        f"allocated={allocated:.2f} GB, "
-        f"reserved={reserved:.2f} GB, "
-        f"peak={peak:.2f} GB"
-    )
+    print(f"[VRAM] {tag}: " f"allocated={allocated:.2f} GB, " f"reserved={reserved:.2f} GB, " f"peak={peak:.2f} GB")
 
 
 def cleanup():
@@ -90,6 +85,7 @@ def cleanup():
 # Load LIBERO statistics
 # ============================================================
 
+
 def load_libero_stats():
     print("[1/7] Loading LIBERO statistics...")
 
@@ -97,10 +93,7 @@ def load_libero_stats():
         all_stats = json.load(f)
 
     if DATASET_KEY not in all_stats:
-        raise KeyError(
-            f"{DATASET_KEY} not found in statistics.\n"
-            f"Available keys: {list(all_stats.keys())}"
-        )
+        raise KeyError(f"{DATASET_KEY} not found in statistics.\n" f"Available keys: {list(all_stats.keys())}")
 
     stats = all_stats[DATASET_KEY]["action"]
 
@@ -120,6 +113,7 @@ def load_libero_stats():
 # Prompt
 # ============================================================
 
+
 def make_prompt(instruction):
     return f"In: What action should the robot take to {instruction}?\nOut:"
 
@@ -127,6 +121,7 @@ def make_prompt(instruction):
 # ============================================================
 # Prepare model inputs
 # ============================================================
+
 
 def prepare_inputs(processor, image, instruction, model):
     prompt = make_prompt(instruction)
@@ -158,6 +153,7 @@ def prepare_inputs(processor, image, instruction, model):
 # ============================================================
 # OpenVLA action decoding
 # ============================================================
+
 
 @torch.inference_mode()
 def predict_action_libero(
@@ -225,15 +221,7 @@ def predict_action_libero(
     # Extract last 7 tokens
     # --------------------------------------------------------
 
-    predicted_token_ids = (
-        generated_ids[
-            0,
-            -action_dim:
-        ]
-        .detach()
-        .cpu()
-        .numpy()
-    )
+    predicted_token_ids = generated_ids[0, -action_dim:].detach().cpu().numpy()
 
     # --------------------------------------------------------
     # OpenVLA action-token decoding
@@ -246,9 +234,7 @@ def predict_action_libero(
     # bin_centers[index]
     # --------------------------------------------------------
 
-    discretized_actions = (
-        model.vocab_size - predicted_token_ids
-    )
+    discretized_actions = model.vocab_size - predicted_token_ids
 
     discretized_actions = np.clip(
         discretized_actions - 1,
@@ -256,9 +242,7 @@ def predict_action_libero(
         a_max=model.bin_centers.shape[0] - 1,
     )
 
-    normalized_actions = model.bin_centers[
-        discretized_actions
-    ]
+    normalized_actions = model.bin_centers[discretized_actions]
 
     normalized_actions = np.asarray(
         normalized_actions,
@@ -284,10 +268,7 @@ def predict_action_libero(
 
     libero_action = np.where(
         mask,
-        0.5
-        * (normalized_actions + 1.0)
-        * (action_high - action_low)
-        + action_low,
+        0.5 * (normalized_actions + 1.0) * (action_high - action_low) + action_low,
         normalized_actions,
     )
 
@@ -301,6 +282,7 @@ def predict_action_libero(
 # ============================================================
 # Load 4-bit base model
 # ============================================================
+
 
 def load_base_model(processor):
     print()
@@ -333,6 +315,7 @@ def load_base_model(processor):
 # ============================================================
 # Load LoRA model
 # ============================================================
+
 
 def load_lora_model(processor):
     print()
@@ -374,6 +357,7 @@ def load_lora_model(processor):
 # ============================================================
 # Main
 # ============================================================
+
 
 def main():
 
@@ -426,10 +410,7 @@ def main():
 
     print()
     print("[4/7] Using OpenVLA action decoding...")
-    print(
-        "Action decoding will reproduce "
-        "OpenVLA's predict_action() logic."
-    )
+    print("Action decoding will reproduce " "OpenVLA's predict_action() logic.")
 
     # ========================================================
     # BASE
@@ -450,10 +431,7 @@ def main():
     for i, instruction in enumerate(INSTRUCTIONS, start=1):
 
         print()
-        print(
-            f"BASE [{i:02d}/{len(INSTRUCTIONS)}] "
-            f"{instruction}"
-        )
+        print(f"BASE [{i:02d}/{len(INSTRUCTIONS)}] " f"{instruction}")
 
         action, normalized, tokens = predict_action_libero(
             model=base_model,
@@ -465,12 +443,14 @@ def main():
             mask=mask,
         )
 
-        base_results.append({
-            "instruction": instruction,
-            "action": action,
-            "normalized": normalized,
-            "tokens": tokens,
-        })
+        base_results.append(
+            {
+                "instruction": instruction,
+                "action": action,
+                "normalized": normalized,
+                "tokens": tokens,
+            }
+        )
 
         print(
             "  tokens:",
@@ -520,10 +500,7 @@ def main():
     for i, instruction in enumerate(INSTRUCTIONS, start=1):
 
         print()
-        print(
-            f"LoRA [{i:02d}/{len(INSTRUCTIONS)}] "
-            f"{instruction}"
-        )
+        print(f"LoRA [{i:02d}/{len(INSTRUCTIONS)}] " f"{instruction}")
 
         action, normalized, tokens = predict_action_libero(
             model=lora_model,
@@ -535,12 +512,14 @@ def main():
             mask=mask,
         )
 
-        lora_results.append({
-            "instruction": instruction,
-            "action": action,
-            "normalized": normalized,
-            "tokens": tokens,
-        })
+        lora_results.append(
+            {
+                "instruction": instruction,
+                "action": action,
+                "normalized": normalized,
+                "tokens": tokens,
+            }
+        )
 
         print(
             "  tokens:",
@@ -585,9 +564,7 @@ def main():
 
         delta = lora_action - base_action
 
-        delta_l2 = float(
-            np.linalg.norm(delta)
-        )
+        delta_l2 = float(np.linalg.norm(delta))
 
         token_changed = not np.array_equal(
             base["tokens"],
@@ -624,7 +601,6 @@ def main():
 
         row = {
             "instruction": instruction,
-
             "base_token_0": int(base["tokens"][0]),
             "base_token_1": int(base["tokens"][1]),
             "base_token_2": int(base["tokens"][2]),
@@ -632,7 +608,6 @@ def main():
             "base_token_4": int(base["tokens"][4]),
             "base_token_5": int(base["tokens"][5]),
             "base_token_6": int(base["tokens"][6]),
-
             "lora_token_0": int(lora["tokens"][0]),
             "lora_token_1": int(lora["tokens"][1]),
             "lora_token_2": int(lora["tokens"][2]),
@@ -640,9 +615,7 @@ def main():
             "lora_token_4": int(lora["tokens"][4]),
             "lora_token_5": int(lora["tokens"][5]),
             "lora_token_6": int(lora["tokens"][6]),
-
             "token_changed": token_changed,
-
             "base_a0": float(base_action[0]),
             "base_a1": float(base_action[1]),
             "base_a2": float(base_action[2]),
@@ -650,7 +623,6 @@ def main():
             "base_a4": float(base_action[4]),
             "base_a5": float(base_action[5]),
             "base_a6": float(base_action[6]),
-
             "lora_a0": float(lora_action[0]),
             "lora_a1": float(lora_action[1]),
             "lora_a2": float(lora_action[2]),
@@ -658,7 +630,6 @@ def main():
             "lora_a4": float(lora_action[4]),
             "lora_a5": float(lora_action[5]),
             "lora_a6": float(lora_action[6]),
-
             "delta_a0": float(delta[0]),
             "delta_a1": float(delta[1]),
             "delta_a2": float(delta[2]),
@@ -666,7 +637,6 @@ def main():
             "delta_a4": float(delta[4]),
             "delta_a5": float(delta[5]),
             "delta_a6": float(delta[6]),
-
             "delta_l2": delta_l2,
         }
 
@@ -709,32 +679,15 @@ def main():
         dtype=np.float32,
     )
 
-    changed_count = sum(
-        r["token_changed"]
-        for r in rows
-    )
+    changed_count = sum(r["token_changed"] for r in rows)
 
     print()
     print("Summary:")
-    print(
-        f"  Instructions tested : {len(rows)}"
-    )
-    print(
-        f"  Token outputs changed: "
-        f"{changed_count}/{len(rows)}"
-    )
-    print(
-        f"  Mean action Δ L2    : "
-        f"{all_l2.mean():.6f}"
-    )
-    print(
-        f"  Max action Δ L2     : "
-        f"{all_l2.max():.6f}"
-    )
-    print(
-        f"  Min action Δ L2     : "
-        f"{all_l2.min():.6f}"
-    )
+    print(f"  Instructions tested : {len(rows)}")
+    print(f"  Token outputs changed: " f"{changed_count}/{len(rows)}")
+    print(f"  Mean action Δ L2    : " f"{all_l2.mean():.6f}")
+    print(f"  Max action Δ L2     : " f"{all_l2.max():.6f}")
+    print(f"  Min action Δ L2     : " f"{all_l2.min():.6f}")
 
     del lora_model
     cleanup()

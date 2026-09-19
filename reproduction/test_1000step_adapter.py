@@ -52,10 +52,7 @@ base_model = AutoModelForVision2Seq.from_pretrained(
     attn_implementation="sdpa",
 )
 
-print(
-    f"Base loaded. VRAM allocated: "
-    f"{torch.cuda.memory_allocated() / 1024**3:.2f} GB"
-)
+print(f"Base loaded. VRAM allocated: " f"{torch.cuda.memory_allocated() / 1024**3:.2f} GB")
 
 print("\n[3/5] Loading 1000-step LoRA adapter...")
 print("Adapter:", ADAPTER)
@@ -75,14 +72,8 @@ total = sum(p.numel() for p in model.parameters())
 
 print(f"Trainable parameters : {trainable:,}")
 print(f"Total parameters     : {total:,}")
-print(
-    f"VRAM allocated      : "
-    f"{torch.cuda.memory_allocated() / 1024**3:.2f} GB"
-)
-print(
-    f"VRAM reserved       : "
-    f"{torch.cuda.memory_reserved() / 1024**3:.2f} GB"
-)
+print(f"VRAM allocated      : " f"{torch.cuda.memory_allocated() / 1024**3:.2f} GB")
+print(f"VRAM reserved       : " f"{torch.cuda.memory_reserved() / 1024**3:.2f} GB")
 
 print("\n[4/5] Checking adapter state...")
 
@@ -106,12 +97,7 @@ inputs = processor(
 )
 
 inputs = {
-    k: (
-        v.to(DEVICE, dtype=torch.bfloat16)
-        if torch.is_floating_point(v)
-        else v.to(DEVICE)
-    )
-    for k, v in inputs.items()
+    k: v.to(DEVICE, dtype=torch.bfloat16) if torch.is_floating_point(v) else v.to(DEVICE) for k, v in inputs.items()
 }
 
 torch.cuda.reset_peak_memory_stats()
@@ -129,10 +115,7 @@ print(action)
 print("\nAction shape:")
 print(action.shape)
 
-print(
-    f"\nPeak VRAM: "
-    f"{torch.cuda.max_memory_allocated() / 1024**3:.2f} GB"
-)
+print(f"\nPeak VRAM: " f"{torch.cuda.max_memory_allocated() / 1024**3:.2f} GB")
 
 print("\n" + "=" * 70)
 print("SUCCESS: 1000-step QLoRA adapter loaded and inference completed")

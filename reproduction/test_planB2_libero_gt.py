@@ -13,7 +13,6 @@ from io import BytesIO
 from transformers import AutoProcessor, AutoModelForVision2Seq, BitsAndBytesConfig
 from peft import PeftModel
 
-
 # ============================================================
 # Configuration
 # ============================================================
@@ -63,11 +62,7 @@ print("CUDA:", torch.version.cuda)
 print("GPU:", torch.cuda.get_device_name(0))
 
 if torch.cuda.is_available():
-    print(
-        "VRAM:",
-        round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2),
-        "GB"
-    )
+    print("VRAM:", round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2), "GB")
 
 
 # ============================================================
@@ -95,6 +90,7 @@ print("mask:", mask)
 # Action normalization used by OpenVLA
 # ============================================================
 
+
 def normalize_action(action):
     """
     Convert LIBERO ground-truth action into OpenVLA normalized space.
@@ -109,11 +105,7 @@ def normalize_action(action):
 
     normalized = action.copy()
 
-    normalized[mask] = (
-        2.0 * (action[mask] - q01[mask])
-        / (q99[mask] - q01[mask])
-        - 1.0
-    )
+    normalized[mask] = 2.0 * (action[mask] - q01[mask]) / (q99[mask] - q01[mask]) - 1.0
 
     return normalized
 
@@ -126,11 +118,7 @@ def unnormalize_action(normalized):
 
     action = normalized.copy()
 
-    action[mask] = (
-        0.5 * (normalized[mask] + 1.0)
-        * (q99[mask] - q01[mask])
-        + q01[mask]
-    )
+    action[mask] = 0.5 * (normalized[mask] + 1.0) * (q99[mask] - q01[mask]) + q01[mask]
 
     return action
 
@@ -138,6 +126,7 @@ def unnormalize_action(normalized):
 # ============================================================
 # Decode TFRecord episode
 # ============================================================
+
 
 def parse_episode(path):
     ds = tf.data.TFRecordDataset(path)
@@ -150,33 +139,21 @@ def parse_episode(path):
     features = example.features.feature
 
     # Images
-    image_bytes = list(
-        features["steps/observation/image"].bytes_list.value
-    )
+    image_bytes = list(features["steps/observation/image"].bytes_list.value)
 
-    wrist_bytes = list(
-        features["steps/observation/wrist_image"].bytes_list.value
-    )
+    wrist_bytes = list(features["steps/observation/wrist_image"].bytes_list.value)
 
     # Language
-    language_bytes = list(
-        features["steps/language_instruction"].bytes_list.value
-    )
+    language_bytes = list(features["steps/language_instruction"].bytes_list.value)
 
     # Actions
-    action_values = np.asarray(
-        features["steps/action"].float_list.value,
-        dtype=np.float32
-    )
+    action_values = np.asarray(features["steps/action"].float_list.value, dtype=np.float32)
 
     num_steps = len(image_bytes)
 
     actions = action_values.reshape(num_steps, 7)
 
-    instructions = [
-        x.decode("utf-8", errors="replace")
-        for x in language_bytes
-    ]
+    instructions = [x.decode("utf-8", errors="replace") for x in language_bytes]
 
     return {
         "images": image_bytes,
@@ -190,14 +167,7 @@ def parse_episode(path):
 # Collect candidate samples
 # ============================================================
 
-files = sorted(
-    glob.glob(
-        os.path.join(
-            DATA_DIR,
-            "libero_spatial-train.tfrecord-*"
-        )
-    )
-)
+files = sorted(glob.glob(os.path.join(DATA_DIR, "libero_spatial-train.tfrecord-*")))
 
 print("\nTFRecord files:", len(files))
 
@@ -214,19 +184,11 @@ episodes = []
 print("\nReading episode metadata...")
 
 for idx, path in enumerate(files):
-    print(
-        f"  [{idx + 1:02d}/{len(files):02d}] "
-        f"{os.path.basename(path)}"
-    )
+    print(f"  [{idx + 1:02d}/{len(files):02d}] " f"{os.path.basename(path)}")
 
     episode = parse_episode(path)
 
-    episodes.append(
-        (
-            path,
-            episode
-        )
-    )
+    episodes.append((path, episode))
 
 print("\nEpisodes loaded:", len(episodes))
 
@@ -259,15 +221,9 @@ print("Total transitions:", len(candidates))
 # ============================================================
 
 if NUM_SAMPLES > len(candidates):
-    raise RuntimeError(
-        f"NUM_SAMPLES={NUM_SAMPLES} > "
-        f"available transitions={len(candidates)}"
-    )
+    raise RuntimeError(f"NUM_SAMPLES={NUM_SAMPLES} > " f"available transitions={len(candidates)}")
 
-samples = random.sample(
-    candidates,
-    NUM_SAMPLES
-)
+samples = random.sample(candidates, NUM_SAMPLES)
 
 print("Selected samples:", len(samples))
 
@@ -341,9 +297,7 @@ print("LoRA model loaded.")
 # Model devices
 # ============================================================
 
-model_device = next(
-    base_model.parameters()
-).device
+model_device = next(base_model.parameters()).device
 
 print("\nModel device:", model_device)
 
@@ -352,12 +306,10 @@ print("\nModel device:", model_device)
 # Prediction helper
 # ============================================================
 
+
 def predict_model(model, image, instruction):
 
-    prompt = (
-        f"In: What action should the robot take to {instruction}?\n"
-        "Out:"
-    )
+    prompt = f"In: What action should the robot take to {instruction}?\n" "Out:"
 
     inputs = processor(
         text=prompt,
@@ -371,9 +323,7 @@ def predict_model(model, image, instruction):
             inputs[key] = inputs[key].to(model_device)
 
     if "pixel_values" in inputs:
-        inputs["pixel_values"] = inputs["pixel_values"].to(
-            dtype=torch.bfloat16
-        )
+        inputs["pixel_values"] = inputs["pixel_values"].to(dtype=torch.bfloat16)
 
     input_ids = inputs["input_ids"]
 
@@ -400,18 +350,10 @@ def predict_model(model, image, instruction):
             max_new_tokens=7,
         )
 
-    predicted_token_ids = (
-        generated_ids[0, -7:]
-        .detach()
-        .cpu()
-        .numpy()
-    )
+    predicted_token_ids = generated_ids[0, -7:].detach().cpu().numpy()
 
     # Exact OpenVLA decoding
-    discretized_actions = (
-        model.vocab_size
-        - predicted_token_ids
-    )
+    discretized_actions = model.vocab_size - predicted_token_ids
 
     # OpenVLA bin centers
     bin_centers = model.bin_centers
@@ -424,19 +366,12 @@ def predict_model(model, image, instruction):
         a_max=bin_centers.shape[0] - 1,
     )
 
-    normalized_action = bin_centers[
-        discretized_actions
-    ]
+    normalized_action = bin_centers[discretized_actions]
 
-    normalized_action = np.asarray(
-        normalized_action,
-        dtype=np.float32
-    )
+    normalized_action = np.asarray(normalized_action, dtype=np.float32)
 
     # LIBERO unnormalization
-    action = unnormalize_action(
-        normalized_action
-    )
+    action = unnormalize_action(normalized_action)
 
     return action, normalized_action
 
@@ -462,14 +397,9 @@ for idx, sample in enumerate(samples):
 
     gt_action = episode["actions"][t]
 
-    image = Image.open(
-        BytesIO(image_bytes)
-    ).convert("RGB")
+    image = Image.open(BytesIO(image_bytes)).convert("RGB")
 
-    print(
-        f"\n[{idx + 1:02d}/{len(samples):02d}] "
-        f"t={t} | {instruction}"
-    )
+    print(f"\n[{idx + 1:02d}/{len(samples):02d}] " f"t={t} | {instruction}")
 
     # Base
     base_action, base_norm = predict_model(
@@ -492,8 +422,8 @@ for idx, sample in enumerate(samples):
     base_mae = np.mean(np.abs(base_error))
     lora_mae = np.mean(np.abs(lora_error))
 
-    base_mse = np.mean(base_error ** 2)
-    lora_mse = np.mean(lora_error ** 2)
+    base_mse = np.mean(base_error**2)
+    lora_mse = np.mean(lora_error**2)
 
     base_l2 = np.linalg.norm(base_error)
     lora_l2 = np.linalg.norm(lora_error)
@@ -502,15 +432,9 @@ for idx, sample in enumerate(samples):
     print("  Base :", np.round(base_action, 4))
     print("  LoRA :", np.round(lora_action, 4))
 
-    print(
-        f"  MAE  Base={base_mae:.6f} "
-        f"LoRA={lora_mae:.6f}"
-    )
+    print(f"  MAE  Base={base_mae:.6f} " f"LoRA={lora_mae:.6f}")
 
-    print(
-        f"  MSE  Base={base_mse:.6f} "
-        f"LoRA={lora_mse:.6f}"
-    )
+    print(f"  MSE  Base={base_mse:.6f} " f"LoRA={lora_mse:.6f}")
 
     rows.append(
         {
@@ -518,7 +442,6 @@ for idx, sample in enumerate(samples):
             "file": os.path.basename(sample["path"]),
             "t": t,
             "instruction": instruction,
-
             "gt_dx": gt_action[0],
             "gt_dy": gt_action[1],
             "gt_dz": gt_action[2],
@@ -526,7 +449,6 @@ for idx, sample in enumerate(samples):
             "gt_dry": gt_action[4],
             "gt_drz": gt_action[5],
             "gt_gripper": gt_action[6],
-
             "base_dx": base_action[0],
             "base_dy": base_action[1],
             "base_dz": base_action[2],
@@ -534,7 +456,6 @@ for idx, sample in enumerate(samples):
             "base_dry": base_action[4],
             "base_drz": base_action[5],
             "base_gripper": base_action[6],
-
             "lora_dx": lora_action[0],
             "lora_dy": lora_action[1],
             "lora_dz": lora_action[2],
@@ -542,13 +463,10 @@ for idx, sample in enumerate(samples):
             "lora_dry": lora_action[4],
             "lora_drz": lora_action[5],
             "lora_gripper": lora_action[6],
-
             "base_mae": base_mae,
             "lora_mae": lora_mae,
-
             "base_mse": base_mse,
             "lora_mse": lora_mse,
-
             "base_l2": base_l2,
             "lora_l2": lora_l2,
         }
@@ -581,29 +499,17 @@ with open(
 # Summary
 # ============================================================
 
-base_mae_all = np.array(
-    [r["base_mae"] for r in rows]
-)
+base_mae_all = np.array([r["base_mae"] for r in rows])
 
-lora_mae_all = np.array(
-    [r["lora_mae"] for r in rows]
-)
+lora_mae_all = np.array([r["lora_mae"] for r in rows])
 
-base_mse_all = np.array(
-    [r["base_mse"] for r in rows]
-)
+base_mse_all = np.array([r["base_mse"] for r in rows])
 
-lora_mse_all = np.array(
-    [r["lora_mse"] for r in rows]
-)
+lora_mse_all = np.array([r["lora_mse"] for r in rows])
 
-base_l2_all = np.array(
-    [r["base_l2"] for r in rows]
-)
+base_l2_all = np.array([r["base_l2"] for r in rows])
 
-lora_l2_all = np.array(
-    [r["lora_l2"] for r in rows]
-)
+lora_l2_all = np.array([r["lora_l2"] for r in rows])
 
 
 print("\n")
@@ -614,65 +520,31 @@ print("=" * 80)
 print(f"Samples: {len(rows)}")
 
 print("\nMAE")
-print(
-    f"  Base : {base_mae_all.mean():.6f}"
-)
-print(
-    f"  LoRA : {lora_mae_all.mean():.6f}"
-)
+print(f"  Base : {base_mae_all.mean():.6f}")
+print(f"  LoRA : {lora_mae_all.mean():.6f}")
 
 print("\nMSE")
-print(
-    f"  Base : {base_mse_all.mean():.6f}"
-)
-print(
-    f"  LoRA : {lora_mse_all.mean():.6f}"
-)
+print(f"  Base : {base_mse_all.mean():.6f}")
+print(f"  LoRA : {lora_mse_all.mean():.6f}")
 
 print("\nL2")
-print(
-    f"  Base : {base_l2_all.mean():.6f}"
-)
-print(
-    f"  LoRA : {lora_l2_all.mean():.6f}"
-)
+print(f"  Base : {base_l2_all.mean():.6f}")
+print(f"  LoRA : {lora_l2_all.mean():.6f}")
 
-mae_improvement = (
-    1.0
-    - lora_mae_all.mean()
-    / base_mae_all.mean()
-) * 100.0
+mae_improvement = (1.0 - lora_mae_all.mean() / base_mae_all.mean()) * 100.0
 
-mse_improvement = (
-    1.0
-    - lora_mse_all.mean()
-    / base_mse_all.mean()
-) * 100.0
+mse_improvement = (1.0 - lora_mse_all.mean() / base_mse_all.mean()) * 100.0
 
-l2_improvement = (
-    1.0
-    - lora_l2_all.mean()
-    / base_l2_all.mean()
-) * 100.0
+l2_improvement = (1.0 - lora_l2_all.mean() / base_l2_all.mean()) * 100.0
 
 print("\nRelative improvement:")
-print(
-    f"  MAE : {mae_improvement:+.2f}%"
-)
-print(
-    f"  MSE : {mse_improvement:+.2f}%"
-)
-print(
-    f"  L2  : {l2_improvement:+.2f}%"
-)
+print(f"  MAE : {mae_improvement:+.2f}%")
+print(f"  MSE : {mse_improvement:+.2f}%")
+print(f"  L2  : {l2_improvement:+.2f}%")
 
-base_better = np.sum(
-    base_mse_all < lora_mse_all
-)
+base_better = np.sum(base_mse_all < lora_mse_all)
 
-lora_better = np.sum(
-    lora_mse_all < base_mse_all
-)
+lora_better = np.sum(lora_mse_all < base_mse_all)
 
 same = len(rows) - base_better - lora_better
 
