@@ -94,6 +94,9 @@ class FinetuneConfig:
     save_latest_checkpoint_only: bool = True                        # Whether to save only one checkpoint per run and
                                                                     #   continually overwrite the latest checkpoint
                                                                     #   (If False, saves all checkpoints)
+    merge_lora_during_training: bool = False                        # 训练结束时是否把 LoRA 合并成完整权重
+                                                                    #   =>> 合并会额外加载一份完整 base 模型（约 15GB 内存），
+                                                                    #       并把完整权重写进 run 目录（约 15GB 磁盘）
 
     # LoRA Arguments
     use_lora: bool = True                                           # Whether to use LoRA fine-tuning
@@ -343,6 +346,12 @@ def finetune(cfg: FinetuneConfig) -> None:
                     # 修改原因：保存 adapter 时也需要兼容单 GPU 模式，不能固定访问 vla.module。
                     vla_raw.save_pretrained(save_dir)
 
+                    # 新增：把数据集统计量（推理时反归一化动作要用）同时写进 adapter 目录，
+                    #       让 LoRA checkpoint 目录自包含，可以直接作为
+                    #       experiments/robot/libero/run_libero_eval.py 的 --pretrained_checkpoint。
+                    if cfg.use_lora:
+                        save_dataset_statistics(vla_dataset.dataset_statistics, save_dir)
+
                 # Wait for processor and adapter weights to be saved by main process
                 # 原始代码：dist.barrier()
                 # 修改原因：单 GPU 模式没有分布式进程组，只有 DDP 模式才需要同步进程。
@@ -351,7 +360,13 @@ def finetune(cfg: FinetuneConfig) -> None:
 
                 # Merge LoRA weights into model backbone for faster inference
                 #   =>> Note that merging is slow and can be done post-hoc to speed up training
-                if cfg.use_lora:
+                # 原始代码：if cfg.use_lora:
+                # 修改原因：合并会把完整 base 模型（约 15GB）额外读进内存，并把合并后的完整权重写到
+                #          run 目录（约 15GB 磁盘）。在 30GB 内存 / 有限磁盘的机器上很容易 OOM 或写满磁盘，
+                #          而本仓库的评测脚本（test_1000step_adapter.py、test_planB_libero_compare.py、
+                #          test_planB2_libero_gt.py）都是直接加载 LoRA adapter，不需要合并权重，
+                #          因此改为由 merge_lora_during_training 控制，默认关闭。
+                if cfg.use_lora and cfg.merge_lora_during_training:
                     base_vla = AutoModelForVision2Seq.from_pretrained(
                         cfg.vla_path, torch_dtype=torch.bfloat16, low_cpu_mem_usage=True, trust_remote_code=True
                     )
