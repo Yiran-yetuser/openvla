@@ -95,6 +95,21 @@ def eval_libero(cfg: GenerateConfig) -> None:
         assert cfg.center_crop, "Expecting `center_crop==True` because model was trained with image augmentations!"
     assert not (cfg.load_in_8bit and cfg.load_in_4bit), "Cannot use both 8-bit and 4-bit quantization!"
 
+    # 新增：把文件描述符软上限提到硬上限。
+    # 原因：LIBERO 评测每个 episode 都会写 MP4（imageio 起 ffmpeg 子进程）、每步都创建离屏渲染上下文，
+    #      长时间评测会累积文件描述符。若通过 setsid/systemd-inhibit 之类的方式后台启动，
+    #      软上限往往只有 1024，跑到第 17 个 episode 左右就会抛
+    #      `OSError: [Errno 24] Too many open files`。
+    try:
+        import resource
+
+        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        if soft_limit < hard_limit:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))
+            print(f"[*] Raised RLIMIT_NOFILE from {soft_limit} to {hard_limit}")
+    except Exception as error:  # pragma: no cover - 仅用于提示，不影响评测
+        print(f"[*] Could not raise RLIMIT_NOFILE: {error}")
+
     # Set random seed
     set_seed_everywhere(cfg.seed)
 
@@ -268,6 +283,11 @@ def eval_libero(cfg: GenerateConfig) -> None:
                     f"num_episodes/{task_description}": task_episodes,
                 }
             )
+
+        # 新增：每个 task 结束后关闭该 task 的仿真环境。
+        # 原因：循环里每个 task 都会新建一个 OffScreenRenderEnv，不关闭会持续占用
+        #      EGL context、显存和文件描述符（长时间评测会累积）。
+        env.close()
 
     # Save local log file
     log_file.close()
