@@ -22,10 +22,12 @@ EXP_ID = (
 )
 
 # 默认配置 = 12-episode 实验（保持脚本原有行为）；
-# 论文口径（全量 432 条 episode、更多步数）用命令行参数覆盖，例如：
+# 本地资源受限的全量近似实验（432 条 episode）用命令行参数覆盖，例如：
 #   python reproduction/run_qlora_1000.py \
-#       --train-episodes 432 --max-steps 5000 \
+#       --train-episodes 432 --max-steps 3500 \
 #       --run-name libero_spatial_full_paper
+# 注意：官方 LIBERO-Spatial checkpoint 使用 50K gradient steps、batch size 128、无量化；
+# 该启动脚本固定为单卡 QLoRA（有效 batch 16），不能把本地近似配置写成论文原配方。
 DEFAULT_TRAIN_EPISODES = 12
 DEFAULT_EVAL_EPISODE_START = 12
 DEFAULT_EVAL_EPISODES = 4
