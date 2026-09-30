@@ -51,6 +51,7 @@ def main():
                           load_in_4bit=True, load_in_8bit=False, bnb_double_quant=args.double_quant)
     model, processor = get_vla(cfg), get_processor(cfg)
     has_adapter = hasattr(model, "disable_adapter")
+    policy_name = "adapter" if has_adapter else "official"
     key = "libero_spatial_no_noops" if "libero_spatial_no_noops" in model.norm_stats else "libero_spatial"
     stats = model.norm_stats[key]["action"]
     tokenizer = ActionTokenizer(processor.tokenizer)
@@ -78,7 +79,7 @@ def main():
                 row = {"episode": args.episode_start + episode_index, "t": t, "length": len(steps),
                        "instruction": instruction, "raw_target": raw.tolist(),
                        "training_target": target.tolist(), "image_sha256": hashlib.sha256(image.tobytes()).hexdigest()}
-                variants = [("adapter", nullcontext(), True), ("adapter_no_crop", nullcontext(), False)]
+                variants = [(policy_name, nullcontext(), True), (policy_name + "_no_crop", nullcontext(), False)]
                 if has_adapter:
                     variants.insert(0, ("base", model.disable_adapter(), True))
                 for name, context, crop in variants:
@@ -109,11 +110,11 @@ def main():
                     "normalized_l1": float(np.abs(tokenizer.decode_token_ids_to_actions(tokens) -
                                                   tokenizer.decode_token_ids_to_actions(gt_tokens)).mean())}
                 rows.append(row)
-                print(f"ep={row['episode']} t={t} adapter_normL1={row['adapter']['normalized_l1_7d']:.4f} "
+                print(f"ep={row['episode']} t={t} policy_normL1={row[policy_name]['normalized_l1_7d']:.4f} "
                       f"teacher_acc={row['teacher_forced']['token_accuracy']:.3f}", flush=True)
 
     summary = {}
-    for name in rows[0].keys() & {"base", "adapter", "adapter_no_crop"}:
+    for name in sorted(rows[0].keys() & {"base", policy_name, policy_name + "_no_crop"}):
         summary[name] = {metric: float(np.mean([r[name][metric] for r in rows]))
                          for metric in ("motion_mae_6d", "simulator_mae_7d", "normalized_l1_7d",
                                         "gripper_correct", "translation_norm")}
