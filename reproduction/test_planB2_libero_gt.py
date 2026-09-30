@@ -377,7 +377,10 @@ for idx, sample in enumerate(samples):
 
     instruction = episode["instructions"][t]
 
-    gt_action = episode["actions"][t]
+    gt_action = episode["actions"][t].copy()
+    # Align with the OpenVLA dataset transform: raw -1=open/+1=close -> 1=open/0=close.
+    # These legacy CSV metrics are in policy-output space, NOT simulator-command space.
+    gt_action[-1] = 1 - np.clip(gt_action[-1], 0, 1)
 
     if isinstance(image_bytes, np.ndarray):
         image = Image.fromarray(image_bytes).convert("RGB")

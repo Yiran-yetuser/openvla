@@ -212,7 +212,8 @@ def predict_action_libero(
     # --------------------------------------------------------
 
     generated_ids = model.generate(
-        input_ids,
+        input_ids=input_ids,
+        pixel_values=inputs["pixel_values"],
         max_new_tokens=action_dim,
         do_sample=False,
     )

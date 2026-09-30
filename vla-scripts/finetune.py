@@ -20,8 +20,10 @@ Run with:
 """
 
 import os
+import json
+import random
 from collections import deque
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -104,6 +106,9 @@ class FinetuneConfig:
     lora_dropout: float = 0.0                                       # Dropout applied to LoRA weights
     use_quantization: bool = False                                  # Whether to 4-bit quantize VLA for LoRA fine-tuning
                                                                     #   => CAUTION: Reduces memory but hurts performance
+    bnb_double_quant: bool = False                                  # Match train/inference explicitly
+    init_adapter: Optional[Path] = None                             # Weight warm-start, NOT optimizer/RNG resume
+    seed: int = 7
 
     # Tracking Parameters
     wandb_project: str = "openvla"                                  # Name of W&B project to log to (use default!)
@@ -116,6 +121,14 @@ class FinetuneConfig:
 @draccus.wrap()
 def finetune(cfg: FinetuneConfig) -> None:
     print(f"Fine-tuning OpenVLA Model `{cfg.vla_path}` on `{cfg.dataset_name}`")
+    assert cfg.max_steps > 0 and cfg.save_steps > 0 and cfg.grad_accumulation_steps > 0
+    random.seed(cfg.seed)
+    torch.manual_seed(cfg.seed)
+    import numpy as np
+    import tensorflow as tf
+    np.random.seed(cfg.seed)
+    tf.random.set_seed(cfg.seed)
+    tf.config.set_visible_devices([], "GPU")
 
     # [Validate] Ensure GPU Available & Set Device / Distributed Context
     assert torch.cuda.is_available(), "Fine-tuning assumes at least one GPU is available!"
@@ -140,14 +153,22 @@ def finetune(cfg: FinetuneConfig) -> None:
 
     # Start =>> Build Directories
     run_dir, adapter_dir = cfg.run_root_dir / exp_id, cfg.adapter_tmp_dir / exp_id
+    if (adapter_dir / "adapter_model.safetensors").exists() or (run_dir / "training_config.json").exists():
+        raise FileExistsError("Choose a new run directory; existing experiment evidence must not be overwritten")
     os.makedirs(run_dir, exist_ok=True)
+    if distributed_state.is_main_process:
+        with (run_dir / "training_config.json").open("x") as handle:
+            json.dump({"config": asdict(cfg), "train_episodes": os.environ.get("OPENVLA_TRAIN_EPISODES"),
+                       "warm_start_is_exact_resume": False, "gpu": torch.cuda.get_device_name(device_id)},
+                      handle, indent=2, default=str)
 
     # Quantization Config =>> only if LoRA fine-tuning
     quantization_config = None
     if cfg.use_quantization:
         assert cfg.use_lora, "Quantized training only supported for LoRA fine-tuning!"
         quantization_config = BitsAndBytesConfig(
-            load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_quant_type="nf4"
+            load_in_4bit=True, bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=cfg.bnb_double_quant,
         )
 
     # Register OpenVLA model to HF Auto Classes (not needed if the model is on HF Hub)
@@ -162,6 +183,7 @@ def finetune(cfg: FinetuneConfig) -> None:
         cfg.vla_path,
         torch_dtype=torch.bfloat16,
         quantization_config=quantization_config,
+        attn_implementation="sdpa",
         low_cpu_mem_usage=True,
         trust_remote_code=True,
     )
@@ -181,7 +203,11 @@ def finetune(cfg: FinetuneConfig) -> None:
             target_modules="all-linear",
             init_lora_weights="gaussian",
         )
-        vla = get_peft_model(vla, lora_config)
+        if cfg.init_adapter is not None:
+            vla = PeftModel.from_pretrained(vla, cfg.init_adapter, is_trainable=True)
+            print(f"Warm-starting adapter weights from {cfg.init_adapter}; optimizer state is NEW")
+        else:
+            vla = get_peft_model(vla, lora_config)
         vla.print_trainable_parameters()
 
     # Wrap VLA in PyTorch DDP Wrapper for Multi-GPU Training
@@ -305,8 +331,15 @@ def finetune(cfg: FinetuneConfig) -> None:
             recent_action_accuracies.append(action_accuracy.item())
             recent_l1_losses.append(action_l1_loss.item())
 
-            # Compute gradient step index
-            gradient_step_idx = batch_idx // cfg.grad_accumulation_steps
+            # All logging, checkpointing and stopping happen after a COMPLETED update.
+            # Previously each save boundary fired on all eight microbatches and the
+            # loop performed an extra backward pass after the requested final update.
+            if (batch_idx + 1) % cfg.grad_accumulation_steps != 0:
+                continue
+            optimizer.step()
+            optimizer.zero_grad(set_to_none=True)
+            progress.update()
+            gradient_step_idx = (batch_idx + 1) // cfg.grad_accumulation_steps
 
             # Compute smoothened train metrics
             #   =>> Equal to current step metrics when not using gradient accumulation
@@ -325,20 +358,24 @@ def finetune(cfg: FinetuneConfig) -> None:
                     },
                     step=gradient_step_idx,
                 )
-
-            # Optimizer Step
-            if (batch_idx + 1) % cfg.grad_accumulation_steps == 0:
-                optimizer.step()
-                optimizer.zero_grad()
-                progress.update()
+            if distributed_state.is_main_process:
+                with (run_dir / "metrics.jsonl").open("a") as handle:
+                    json.dump({"optimizer_step": gradient_step_idx, "microbatches": batch_idx + 1,
+                               "loss": smoothened_loss, "action_token_accuracy": smoothened_action_accuracy,
+                               "normalized_action_l1": smoothened_l1_loss,
+                               "peak_allocated_gib": torch.cuda.max_memory_allocated() / 2**30}, handle)
+                    handle.write("\n")
 
             # Save Model Checkpoint =>> by default, only keeps the latest checkpoint, continually overwriting it!
-            if gradient_step_idx > 0 and gradient_step_idx % cfg.save_steps == 0:
+            if gradient_step_idx % cfg.save_steps == 0 or gradient_step_idx == cfg.max_steps:
                 if distributed_state.is_main_process:
                     print(f"Saving Model Checkpoint for Step {gradient_step_idx}")
 
                     # If LoRA, we first save adapter weights, then merge into full model; otherwise, default save!
                     save_dir = adapter_dir if cfg.use_lora else run_dir
+                    if cfg.use_lora and not cfg.save_latest_checkpoint_only:
+                        assert not cfg.merge_lora_during_training, "Milestone adapters cannot be merged in this loop"
+                        save_dir = Path(str(adapter_dir) + f"--{gradient_step_idx}_chkpt")
 
                     # Save Processor & Weights
                     processor.save_pretrained(run_dir)
@@ -351,6 +388,11 @@ def finetune(cfg: FinetuneConfig) -> None:
                     #       experiments/robot/libero/run_libero_eval.py 的 --pretrained_checkpoint。
                     if cfg.use_lora:
                         save_dataset_statistics(vla_dataset.dataset_statistics, save_dir)
+                    with (save_dir / "training_state.json").open("w") as handle:
+                        json.dump({"optimizer_step": gradient_step_idx, "microbatches": batch_idx + 1,
+                                   "init_adapter": str(cfg.init_adapter) if cfg.init_adapter else None,
+                                   "exact_resume_available": False,
+                                   "bnb_double_quant": cfg.bnb_double_quant}, handle, indent=2)
 
                 # Wait for processor and adapter weights to be saved by main process
                 # 原始代码：dist.barrier()

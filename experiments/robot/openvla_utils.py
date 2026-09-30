@@ -34,7 +34,7 @@ def get_vla(cfg):
     """Loads and returns a VLA model from checkpoint."""
     # Load VLA checkpoint.
     print("[*] Instantiating Pretrained VLA model")
-    print("[*] Loading in BF16 with Flash-Attention Enabled")
+    print("[*] Loading with BF16 compute and SDPA attention")
 
     # Register OpenVLA model to HF Auto Classes (not needed if the model is on HF Hub)
     AutoConfig.register("openvla", OpenVLAConfig)
@@ -60,16 +60,20 @@ def get_vla(cfg):
     #   3) 12GB 显存下 base 模型需要用 4-bit NF4 量化加载。
     checkpoint_dir = Path(cfg.pretrained_checkpoint)
     is_lora_checkpoint = (checkpoint_dir / "adapter_config.json").is_file()
+    # Match the adapter and official-checkpoint controls: bare load_in_4bit
+    # otherwise silently defaults to FP4 instead of the training NF4 quantizer.
+    quantization_config = None
+    if cfg.load_in_4bit:
+        quantization_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_compute_dtype=torch.bfloat16,
+            bnb_4bit_use_double_quant=getattr(cfg, "bnb_double_quant", True),
+        )
+    elif cfg.load_in_8bit:
+        quantization_config = BitsAndBytesConfig(load_in_8bit=True)
 
     if is_lora_checkpoint:
-        quantization_config = None
-        if cfg.load_in_4bit:
-            quantization_config = BitsAndBytesConfig(
-                load_in_4bit=True,
-                bnb_4bit_quant_type="nf4",
-                bnb_4bit_compute_dtype=torch.bfloat16,
-                bnb_4bit_use_double_quant=True,
-            )
 
         base_vla = AutoModelForVision2Seq.from_pretrained(
             cfg.base_model_path,
@@ -87,8 +91,7 @@ def get_vla(cfg):
             cfg.pretrained_checkpoint,
             attn_implementation="sdpa",
             torch_dtype=torch.bfloat16,
-            load_in_8bit=cfg.load_in_8bit,
-            load_in_4bit=cfg.load_in_4bit,
+            quantization_config=quantization_config,
             low_cpu_mem_usage=True,
             trust_remote_code=True,
         )
@@ -118,6 +121,7 @@ def get_vla(cfg):
             "Otherwise, you may run into errors when trying to call `predict_action()` due to an absent `unnorm_key`."
         )
 
+    vla.eval()
     return vla
 
 

@@ -49,15 +49,24 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-name", default=DEFAULT_RUN_NAME,
                         help="输出目录名，run 输出到 runs/<name>/，adapter 输出到 adapter-tmp/<name>/")
     parser.add_argument("--log-file", default=None, help="训练日志路径，默认 reproduction/finetune_<name>.log")
+    parser.add_argument("--learning-rate", type=float, default=5e-4)
+    parser.add_argument("--init-adapter", type=Path, help="从已有 adapter 权重热启动；不是精确断点续训")
+    parser.add_argument("--keep-checkpoints", action="store_true", help="保留每个保存节点的 adapter")
     return parser
 
 
 def main(argv=None) -> int:
     args = build_parser().parse_args(argv)
+    if not args.run_name or Path(args.run_name).name != args.run_name:
+        raise ValueError("run-name must be a single directory name")
+    if args.init_adapter and not (args.init_adapter / "adapter_config.json").is_file():
+        raise FileNotFoundError(args.init_adapter)
 
     run_root = f"runs/{args.run_name}"
     adapter_tmp_dir = f"adapter-tmp/{args.run_name}"
     log_file = Path(args.log_file) if args.log_file else REPO_DIR / "reproduction" / f"finetune_{args.run_name}.log"
+    if log_file.exists():
+        raise FileExistsError(f"Choose a new log path to preserve experiment history: {log_file}")
 
     if not MODEL_DIR.is_dir():
         raise FileNotFoundError(f"本地 OpenVLA 模型目录不存在: {MODEL_DIR}")
@@ -95,7 +104,9 @@ def main(argv=None) -> int:
         "--save_steps",
         str(args.save_steps or args.max_steps),
         "--learning_rate",
-        "5e-4",
+        str(args.learning_rate),
+        "--save_latest_checkpoint_only",
+        str(not args.keep_checkpoints).lower(),
         "--use_lora",
         "true",
         "--use_quantization",
@@ -103,6 +114,8 @@ def main(argv=None) -> int:
         "--image_aug",
         "true",
     ]
+    if args.init_adapter:
+        finetune_args += ["--init_adapter", str(args.init_adapter.resolve())]
 
     command = [sys.executable, str(REPO_DIR / "vla-scripts/finetune.py"), *finetune_args]
 
@@ -127,10 +140,11 @@ def main(argv=None) -> int:
 
     print(f"启动 OpenVLA-7B QLoRA 训练：train[:{args.train_episodes}] / {args.max_steps} steps", flush=True)
     print(f"日志文件        : {log_file}", flush=True)
-    print(f"run 输出目录    : {REPO_DIR / run_root / EXP_ID}", flush=True)
-    print(f"adapter 输出目录: {REPO_DIR / adapter_tmp_dir / EXP_ID}", flush=True)
+    exp_id = EXP_ID.replace("lr-0.0005", f"lr-{args.learning_rate}")
+    print(f"run 输出目录    : {REPO_DIR / run_root / exp_id}", flush=True)
+    print(f"adapter 输出目录: {REPO_DIR / adapter_tmp_dir / exp_id}", flush=True)
 
-    with log_file.open("w", encoding="utf-8") as log_handle:
+    with log_file.open("x", encoding="utf-8") as log_handle:
         process = subprocess.Popen(
             command,
             cwd=REPO_DIR,

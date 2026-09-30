@@ -18,10 +18,11 @@ Usage:
 """
 
 import os
+import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import draccus
 import numpy as np
@@ -63,6 +64,7 @@ class GenerateConfig:
     base_model_path: str = "openvla/openvla-7b"      # LoRA adapter 对应的 base 模型路径
     load_in_8bit: bool = False                       # (For OpenVLA only) Load with 8-bit quantization
     load_in_4bit: bool = False                       # (For OpenVLA only) Load with 4-bit quantization
+    bnb_double_quant: bool = True                    # Explicitly match the training recipe for diagnostics
 
     center_crop: bool = True                         # Center crop? (if trained w/ random crop image aug)
 
@@ -72,6 +74,9 @@ class GenerateConfig:
     task_suite_name: str = "libero_spatial"          # Task suite. Options: libero_spatial, libero_object, libero_goal, libero_10, libero_90
     num_steps_wait: int = 10                         # Number of steps to wait for objects to stabilize in sim
     num_trials_per_task: int = 50                    # Number of rollouts per task
+    task_ids: Optional[List[int]] = None             # Bounded diagnostic subset; None = full suite
+    trace_actions: bool = False                     # JSON action + robot state traces for failure diagnosis
+    fail_fast: bool = False                         # Diagnostic mode: propagate errors, don't call them policy failures
 
     #################################################################################################################
     # Utils
@@ -153,6 +158,10 @@ def eval_libero(cfg: GenerateConfig) -> None:
     benchmark_dict = benchmark.get_benchmark_dict()
     task_suite = benchmark_dict[cfg.task_suite_name]()
     num_tasks_in_suite = task_suite.n_tasks
+    selected_tasks = list(range(num_tasks_in_suite)) if cfg.task_ids is None else cfg.task_ids
+    assert selected_tasks and len(set(selected_tasks)) == len(selected_tasks)
+    assert all(0 <= task_id < num_tasks_in_suite for task_id in selected_tasks)
+    log_file.write(f"Selected task IDs: {selected_tasks}; trials per task: {cfg.num_trials_per_task}\n")
     print(f"Task suite: {cfg.task_suite_name}")
     log_file.write(f"Task suite: {cfg.task_suite_name}\n")
 
@@ -161,7 +170,7 @@ def eval_libero(cfg: GenerateConfig) -> None:
 
     # Start evaluation
     total_episodes, total_successes = 0, 0
-    for task_id in tqdm.tqdm(range(num_tasks_in_suite)):
+    for task_id in tqdm.tqdm(selected_tasks):
         # Get task
         task = task_suite.get_task(task_id)
 
@@ -185,6 +194,9 @@ def eval_libero(cfg: GenerateConfig) -> None:
 
             # Setup
             t = 0
+            done = False
+            episode_error = None
+            action_trace = []
             replay_images = []
             if cfg.task_suite_name == "libero_spatial":
                 max_steps = 220  # longest training demo has 193 steps
@@ -240,6 +252,12 @@ def eval_libero(cfg: GenerateConfig) -> None:
                     if cfg.model_family == "openvla":
                         action = invert_gripper_action(action)
 
+                    if cfg.trace_actions:
+                        action_trace.append({"step": t - cfg.num_steps_wait,
+                                             "simulator_action": action.tolist(),
+                                             "eef_pos": obs["robot0_eef_pos"].tolist(),
+                                             "gripper_qpos": obs["robot0_gripper_qpos"].tolist()})
+
                     # Execute action in environment
                     obs, reward, done, info = env.step(action.tolist())
                     if done:
@@ -249,12 +267,26 @@ def eval_libero(cfg: GenerateConfig) -> None:
                     t += 1
 
                 except Exception as e:
+                    episode_error = repr(e)
                     print(f"Caught exception: {e}")
                     log_file.write(f"Caught exception: {e}\n")
+                    if cfg.fail_fast:
+                        env.close()
+                        log_file.flush()
+                        log_file.close()
+                        raise
                     break
 
             task_episodes += 1
             total_episodes += 1
+            if cfg.trace_actions:
+                trace_path = Path(cfg.local_log_dir) / f"{run_id}--task{task_id}-trial{episode_idx}.json"
+                with trace_path.open("x") as handle:
+                    json.dump({"task_id": task_id, "instruction": task_description,
+                               "trial": episode_idx, "success": bool(done), "error": episode_error,
+                               "checkpoint": str(cfg.pretrained_checkpoint), "seed": cfg.seed,
+                               "center_crop": cfg.center_crop, "double_quant": cfg.bnb_double_quant,
+                               "actions": action_trace}, handle, indent=2)
 
             # Save a replay video of the episode
             save_rollout_video(
