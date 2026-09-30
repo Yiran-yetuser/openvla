@@ -46,5 +46,5 @@ CPU 回归测试：`python -m unittest reproduction.test_action_metrics -v`，5 
 - 本地/官方动作反归一化 q99 和 mask 完全一致，q01 最大差约5.4e-9。暂未发现明显统计范围错误。
 - task0 的两个固定状态闭环：0/2，无运行异常，各220个动作。99.55–100% 的平移命令范数 <0.02，夹爪始终张开，末端离起点最大距离2.94/3.65毫米。失败在起始停滞，尚未进入抓取阶段。
 - 训练帧起始状态也有同类现象：8帧中7帧预测相同近零平移，而GT平移并不全为零。说明停滞不只出现在simulator分布中；仍不能证明是训练量、量化或优化设置导致。
-- 官方完整模型对照：固定 revision `962318cec55ac10993ff0f5f43eda9a270b4c873`，权重下载中，尚无成功率结果。加载完整模型和adapter均显式使用NF4/BF16计算/double quant=False，避免FP4默认值混入控制组。
+- 官方完整模型对照：固定 revision `962318cec55ac10993ff0f5f43eda9a270b4c873`，14个文件（15,085,047,523 bytes）已下载并逐文件核验大小，见 `results/official_checkpoint_manifest.json`。这是下载完成证据，不是性能结果。准备运行时 Fast3R 再次占用约8GiB显存，因此按用户要求等待，不抢占GPU。加载完整模型和adapter均显式使用NF4/BF16计算/double quant=False，避免FP4默认值混入控制组。
 - 10-update热启动暂缓，优先完成官方对照；保存新checkpoint需另有2GiB磁盘余量。原始HDF5演示及完整sim初始状态在本机未找到，演示回放尚未完成，不用TFDS中的末端状态冒充完整sim状态。
