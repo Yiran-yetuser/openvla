@@ -5,6 +5,7 @@ disk space. Temporary adapter copies are cleaned even if an exception occurs.
 This is an engineering verification, NOT continued training or policy improvement.
 """
 import argparse
+from contextlib import nullcontext
 import gc
 import hashlib
 import json
@@ -133,9 +134,12 @@ def main():
         model.base_model.model.norm_stats = statistics
         return model
 
-    def prediction(model, chosen_processor):
+    def prediction(model, chosen_processor, training_autocast=True):
         model.eval()
-        with torch.inference_mode():
+        # prepare_model_for_kbit_training casts non-quantized vision layers to FP32.
+        # Match finetune's autocast for this loader; keep production's actual context.
+        context = torch.autocast("cuda", dtype=torch.bfloat16) if training_autocast else nullcontext()
+        with torch.inference_mode(), context:
             return [get_vla_action(model, chosen_processor, base_path,
                                    {"full_image": frames[i]["image"]}, frames[i]["instruction"], key,
                                    center_crop=False).tolist() for i in (0, 1, 2)]
@@ -203,7 +207,7 @@ def main():
         cfg = SimpleNamespace(pretrained_checkpoint=str(temporary_checkpoint), base_model_path=base_path,
                               load_in_4bit=True, load_in_8bit=False, bnb_double_quant=False)
         model = get_vla(cfg)
-        production_action = prediction(model, get_processor(cfg))
+        production_action = prediction(model, get_processor(cfg), training_autocast=False)
         production_equal = bool(np.array_equal(after_action, production_action))
         production_max_difference = float(np.abs(np.asarray(after_action) - production_action).max())
         del model
@@ -218,6 +222,7 @@ def main():
               "conditions": conditions, "samples": 16, "batch_size": 2, "accumulation_steps": 8,
               "optimizer_updates": 1, "learning_rate": 5e-4, "new_optimizer_not_exact_resume": True,
               "random_augmentation": False, "center_crop_for_prediction": False,
+              "prediction_contexts": {"training_loader": "BF16 CUDA autocast", "production_loader": "no autocast; actual production entry"},
               "quantization": {"nf4": True, "double_quant": False, "compute": "bfloat16"},
               "losses": losses, "gradients": gradients, "parameter_changes": changes,
               "gradient_tensors_nonzero": sum(row["grad_nonzero"] for row in gradients),

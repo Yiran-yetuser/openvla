@@ -80,7 +80,7 @@ CPU 回归测试：`python -m unittest reproduction.test_action_metrics -v`，5 
 
 下一步诊断优先级：核查本地训练数据配对、监督token、优化更新和学习量，并单独检查状态1的图像与初始状态敏感性；每次仅改变一个因素。原始HDF5演示回放与10-update保存链路验证仍未完成，系统盘约2GiB空余，后者继续暂缓。此轮有界官方对照已完成，不自动扩大到长训练或全套评测。
 
-## 训练链路体检：CPU阶段（2026-10-01）
+## 训练链路体检：CPU阶段（2026-10-01，当时状态快照；运行时结果见下节）
 
 新增可重复执行的 `audit_training_chain.py`，真实输出为 `results/training_chain_cpu_audit_v1.json`。没有加载GPU模型、修改权重或执行优化更新。当前Fast3R作业占约8.4GiB显存，遵照用户要求不抢占。
 
@@ -94,3 +94,18 @@ CPU 回归测试：`python -m unittest reproduction.test_action_metrics -v`，5 
 **第一步尚未全部完成：** runtime LoRA梯度是否finite/非零、一次真实optimizer update前后参数变化、保存后重新加载的预测一致性仍pending。不能用旧 `test_qlora_backward.py` 代替：该脚本把提示词input_ids直接当labels，自认是假样本，未验证真实机器人动作监督。原始HDF5配对也未验证；本次仅证明“存储TFDS → 当前生产转换”在上述样本一致。GPU空闲且有足够保存余量后，才在独立临时产物中做有界验证，保留原checkpoint。没有发现新的已证实低成功率根因。
 
 运行时验证入口已准备：`audit_training_runtime.py` 默认dry-run；`--execute`才会在空闲GPU上执行。固定16帧、microbatch2×累积8、AdamW lr5e-4、仅一次更新，记录每个LoRA矩阵的梯度与参数差。以默认PEFT保存方式写独立临时adapter，分别用相同训练加载器和生产推理加载器比较3个阶段帧的动作；两种加载器的差异不能隐藏在统一PASS中。原始权重/config/stats前后SHA256一致，临时adapter退出时清理。保存前要求现有adapter大小+1GiB保留空间+64MiB辅助文件缓冲，不保存优化器、不合并完整模型。当前只有dry-run和4项安全门控CPU回归测试通过，不能据此声称GPU链路已通过。
+
+## 训练链路体检：运行时已完成（2026-10-01）
+
+GPU空闲后执行，未抢占Fast3R。真实报告 `results/training_chain_runtime_audit_v1.json`，状态 `pass`。此前CPU快照中的前三项runtime待办在本轮完成；原始HDF5配对和历史随机增强仍未验证。
+
+- 16个与CPU体检一致的真实动作帧，无随机增强；batch2×累积8，AdamW lr5e-4，仅1次更新，新优化器，非精确断点续训。
+- 8个微批次loss均finite，范围2.262401–3.528154，平均2.819472。878个LoRA张量中852个有finite、非零梯度，且852个更新后发生变化，最大参数绝对差0.000501126。冻结参数均无梯度。
+- 其余26个LoRA A/B张量无梯度、无变化，恰对应CPU审查中13个不参与返回patch输出的视觉末层/池化分支；不是全模型没有学习。按张量名称核验，而非忽略全部无梯度情况。
+- 3个阶段帧中2个预测在更新后改变；不据此宣称误差减小或策略改进。同训练加载器重载和生产加载器重载，均与保存前更新后的3×7动作逐值一致，生产最大绝对差0。
+- 训练准备加载器的预测使用BF16 CUDA autocast；生产加载器保持实际入口的无autocast。比较的是最终离散解码动作，不证明两种加载器内部dtype、logits或所有输入完全相同。
+- 训练阶段PyTorch峰值allocated 7.957GiB，不是系统总显存。临时保存971,136,009 bytes，退出后已清理；原adapter/config/stats的SHA256前后不变。没有保存新训练checkpoint或优化器。
+
+第一尝试在更新前失败：体检预测给 `prepare_model_for_kbit_training` 转为FP32的视觉层传入BF16图像却没有autocast，错误 `Input type (c10::BFloat16) and bias type (float) should be the same`。证据 `results/training_chain_runtime_attempt1_error.json`；补上与真实训练一致的混合精度上下文后安全重试通过。它是新体检脚本的错误，不是历史低成功率的根因证据。
+
+**本轮第一步（当前数据→动作监督→反传→一次更新→临时保存重载）完成。** 当前样本不支持“LoRA完全没梯度 / optimizer不更新 / 保存加载丢失adapter”这些解释；不能还原历史训练全过程，也不能推出充分收敛或达到论文成功率。下一轮建议先设计有界少样本拟合验证，查看训练目标能否持续下降及自回归运动是否摆脱近零；本轮不自动启动该实验、长训练或500评测。低成功率唯一根因仍未确定。
