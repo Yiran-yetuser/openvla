@@ -92,3 +92,5 @@ CPU 回归测试：`python -m unittest reproduction.test_action_metrics -v`，5 
 - 951帧中5帧原始平移范数<0.02；当前训练包含8个terminal帧。样本范围有限，既不证明全局空闲动作比例，也不证明terminal一定是无效占位标签。
 
 **第一步尚未全部完成：** runtime LoRA梯度是否finite/非零、一次真实optimizer update前后参数变化、保存后重新加载的预测一致性仍pending。不能用旧 `test_qlora_backward.py` 代替：该脚本把提示词input_ids直接当labels，自认是假样本，未验证真实机器人动作监督。原始HDF5配对也未验证；本次仅证明“存储TFDS → 当前生产转换”在上述样本一致。GPU空闲且有足够保存余量后，才在独立临时产物中做有界验证，保留原checkpoint。没有发现新的已证实低成功率根因。
+
+运行时验证入口已准备：`audit_training_runtime.py` 默认dry-run；`--execute`才会在空闲GPU上执行。固定16帧、microbatch2×累积8、AdamW lr5e-4、仅一次更新，记录每个LoRA矩阵的梯度与参数差。以默认PEFT保存方式写独立临时adapter，分别用相同训练加载器和生产推理加载器比较3个阶段帧的动作；两种加载器的差异不能隐藏在统一PASS中。原始权重/config/stats前后SHA256一致，临时adapter退出时清理。保存前要求现有adapter大小+1GiB保留空间+64MiB辅助文件缓冲，不保存优化器、不合并完整模型。当前只有dry-run和4项安全门控CPU回归测试通过，不能据此声称GPU链路已通过。
