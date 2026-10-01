@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "status": "interim_checkpoint10_verified_not_final",
+  "spec": {
+    "schema_version": 1,
+    "source_checkpoint": "/home/yyz/openvla/adapter-tmp/libero_spatial_full_paper/openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+lora-r32+dropout-0.0+q-4bit--image_aug",
+    "optimizer_updates": 50,
+    "learning_rate": 0.0001,
+    "fit_frames": 16,
+    "microbatch": 2,
+    "accumulation": 8,
+    "augmentation": false,
+    "nf4": true,
+    "double_quant": false,
+    "seed": 7,
+    "milestones": [
+      0,
+      10,
+      25,
+      50
+    ],
+    "claim": "memorization probe; no generalization or rollout success claim",
+    "original_sha256": {
+      "adapter_model.safetensors": "493e3388a72106916cf0bc52d3f2122345a04bcc1dc7d9071b7cabbe4b079259",
+      "adapter_config.json": "0fae9c8b32b63b7a87f6766ff64ec2cd62bd9c707f819b72b398f830a0518697",
+      "dataset_statistics.json": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758"
+    }
+  },
+  "evaluations": [
+    {
+      "step": 0,
+      "loader": "training_BF16_autocast",
+      "center_crop": false,
+      "summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.3839285714285714,
+          "teacher_token_l1": 0.14593837535014006,
+          "autoregressive_motion_mae": 0.11270311026229714,
+          "autoregressive_normalized_l1": 0.21429853684243833,
+          "gripper_correct": 15,
+          "small_translation_count": 9
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11218487394957984,
+          "autoregressive_motion_mae": 0.10004491293099038,
+          "autoregressive_normalized_l1": 0.1661974397850028,
+          "gripper_correct": 8,
+          "small_translation_count": 6
+        }
+      }
+    },
+    {
+      "step": 10,
+      "loader": "training_BF16_autocast",
+      "center_crop": false,
+      "summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.9732142857142858,
+          "teacher_token_l1": 0.002240896358543418,
+          "autoregressive_motion_mae": 0.005096859865909591,
+          "autoregressive_normalized_l1": 0.006505965335235883,
+          "gripper_correct": 16,
+          "small_translation_count": 1
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11134453781512606,
+          "autoregressive_motion_mae": 0.0921449432800466,
+          "autoregressive_normalized_l1": 0.16285216047161954,
+          "gripper_correct": 8,
+          "small_translation_count": 5
+        }
+      }
+    }
+  ],
+  "evidence": [
+    {
+      "step": 0,
+      "evaluation_sha256": "89bd39e4d0a3c0d5eda0d0884f848561bb63ef37c22e32a7e49cc8721cf60584",
+      "snapshot_sha256": "156ee2f87efca0336f88427cd068daa4799616539018acb92b9478ef5d196d10"
+    },
+    {
+      "step": 10,
+      "evaluation_sha256": "679270ed2e0b38675c34bf022c4a8e0ebcc493cb011db72471c0beba84b93f46",
+      "snapshot_sha256": "9c9174cd92f2499185215995f13e15e8030e01f072de1cfbbeb085e8d029a119"
+    }
+  ],
+  "matched_cpu_frame_ids": true,
+  "original_checkpoint_modified": false,
+  "limits": [
+    "16-frame fitting only; not generalization or rollout success",
+    "8 probe frames were previously seen by full-data adapter",
+    "uncropped context differs from previous cropped diagnostics",
+    "50-update experiment still running at time of this interim snapshot"
+  ]
+}

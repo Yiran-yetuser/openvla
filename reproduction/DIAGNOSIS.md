@@ -109,3 +109,17 @@ GPU空闲后执行，未抢占Fast3R。真实报告 `results/training_chain_runt
 第一尝试在更新前失败：体检预测给 `prepare_model_for_kbit_training` 转为FP32的视觉层传入BF16图像却没有autocast，错误 `Input type (c10::BFloat16) and bias type (float) should be the same`。证据 `results/training_chain_runtime_attempt1_error.json`；补上与真实训练一致的混合精度上下文后安全重试通过。它是新体检脚本的错误，不是历史低成功率的根因证据。
 
 **本轮第一步（当前数据→动作监督→反传→一次更新→临时保存重载）完成。** 当前样本不支持“LoRA完全没梯度 / optimizer不更新 / 保存加载丢失adapter”这些解释；不能还原历史训练全过程，也不能推出充分收敛或达到论文成功率。下一轮建议先设计有界少样本拟合验证，查看训练目标能否持续下降及自回归运动是否摆脱近零；本轮不自动启动该实验、长训练或500评测。低成功率唯一根因仍未确定。
+
+## 扩容后继续：有界真实样本拟合（2026-10-02）
+
+用户授权继续；磁盘扩容后检查可用约122GB，宿主GPU无compute作业。新增 `fit_small_sample.py`，从原3500-step adapter热启动，固定前16个已核验真实帧，batch2×累积8、AdamW lr1e-4、最多50次更新，无随机增强。0/10/25/50节点测同24帧的teacher-forcing与自回归动作；后8帧只作本轮probe，原全量adapter已见过它们，**不是held-out**。为对齐拟合画面，本轮训练/诊断都不裁剪，不能与之前中心裁剪的指标直接当成同一实验比较。lr1e-4是诊断选择，不是学习率单因素消融。
+
+运行记录位于 `runs/small_fit_v1`（Git忽略）：独立后台worker、原子progress JSON、不可覆盖的完成checkpoint、逐步loss日志。节点保存adapter/optimizer/Torch CPU和CUDA RNG及SHA256；只有完整发布的manifest才能resume，未完成partial保留作为错误证据。最多保留4个完成节点，不覆盖原权重；脚本有空闲GPU、重复worker锁、更新上限、磁盘与hash守卫。最终小报告目标 `results/small_fit_v1.json`，未产生前不填性能结论；生产加载器会另外复测24帧动作，差异单列。
+
+14项CPU回归测试（原9项+5项新拟合/恢复守卫）和Python AST通过；GPU拟合刚启动，**不能把CPU测试通过当作模型已拟合成功**。后台接手说明见 `CONTINUE.md`，每小时在本聊天检查一次，忙或无变化静默。本地Python计算不调用Codex/API；定时接手仍需要机器开机、桌面应用运行和可用额度，不能保证额度刷新时无缝自动恢复，不使用重置券或购买额度。
+
+### 第10步中间证据（不是最终50步结果）
+
+`results/small_fit_milestone10_v1.json` 记录已SHA256核验的0/10节点；24帧episode/step/图像hash与CPU报告相同，原权重hash未变。
+16个拟合帧的teacher-forcing token准确率从38.39%升至97.32%，自回归六维运动MAE从0.112703降至0.005097，归一化L1从0.214299降至0.006506；夹爪正确15/16→16/16，近零平移样本9→1。
+8个probe帧token准确率均为32.14%，运动MAE仅从0.100045变为0.092145。当前证据支持“该QLoRA/监督/优化组合可以拟合小批真实动作”，不证明泛化或闭环改善，也不能据此将历史失败唯一归因于训练量。50步实验仍在运行，生产loader最终重测待完成。
