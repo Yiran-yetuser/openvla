@@ -79,3 +79,16 @@ CPU 回归测试：`python -m unittest reproduction.test_action_metrics -v`，5 
 官方在状态0成功，说明当前NF4/提示/相机/动作接口组合**至少能完成一次此任务**，不支持“共同部署链路必然失败”的解释。状态1两模型仍停滞，不能宣布共同环境、预处理或量化影响已全部排除。没有同官方模型的BF16对照，无法测量NF4性能损失；推理量化对照也不能证明QLoRA量化训练没有影响。
 
 下一步诊断优先级：核查本地训练数据配对、监督token、优化更新和学习量，并单独检查状态1的图像与初始状态敏感性；每次仅改变一个因素。原始HDF5演示回放与10-update保存链路验证仍未完成，系统盘约2GiB空余，后者继续暂缓。此轮有界官方对照已完成，不自动扩大到长训练或全套评测。
+
+## 训练链路体检：CPU阶段（2026-10-01）
+
+新增可重复执行的 `audit_training_chain.py`，真实输出为 `results/training_chain_cpu_audit_v1.json`。没有加载GPU模型、修改权重或执行优化更新。当前Fast3R作业占约8.4GiB显存，遵照用户要求不抢占。
+
+- 前8条TFDS演示共951帧，经生产标准化、BOUNDS_Q99归一化、goal relabeling、window_size=1 / future_action_window_size=0、解码与resize后，与直接读取的同一TFDS step逐项对照：图像像素、指令和动作索引一致，归一化最大误差1.83e-7。
+- 24个固定阶段帧与前述诊断hash相同。每帧7个动作token和1个EOS，提示词部分屏蔽；动作token与独立离散化计算一致，最大量化解码误差0.003922。collator没有截断标签，padding不参与loss。
+- 相同图像下，训练image_transform与推理processor的pixel_values逐值一致；补上生产predict_action的29871空白token后，推理提示前缀与训练提示前缀一致。此检查禁用随机增强，不能替代历史增强画面的核验。
+- checkpoint共879个张量均finite：878个LoRA张量，参数量110,828,288；另含完整lm_head，PEFT因为target_modules包含lm_head会自动保存该层。其FP32权重与基础模型逐值相同，不是基础输出层被误训练的证据。导出配置inference_mode=True是保存行为，热启动使用is_trainable=True；字段本身不是冻结训练的证据。
+- 439个LoRA B中426个非零，13个全零仅位于DINO最后block23、SigLIP最后block26及attention pool。当前模型返回倒数第二层patch特征，末层和池化不参与该输出，因而这些零矩阵不直接说明有效分支没有学习。非零矩阵也不证明历史优化轨迹正确。
+- 951帧中5帧原始平移范数<0.02；当前训练包含8个terminal帧。样本范围有限，既不证明全局空闲动作比例，也不证明terminal一定是无效占位标签。
+
+**第一步尚未全部完成：** runtime LoRA梯度是否finite/非零、一次真实optimizer update前后参数变化、保存后重新加载的预测一致性仍pending。不能用旧 `test_qlora_backward.py` 代替：该脚本把提示词input_ids直接当labels，自认是假样本，未验证真实机器人动作监督。原始HDF5配对也未验证；本次仅证明“存储TFDS → 当前生产转换”在上述样本一致。GPU空闲且有足够保存余量后，才在独立临时产物中做有界验证，保留原checkpoint。没有发现新的已证实低成功率根因。
