@@ -1,5 +1,11 @@
 # OpenVLA 接手记录（2026-10-03）
 
+## 上传待用户明确确认；完整目标未完成
+
+本轮修复和有界闭环证据已本地提交`b65a133`。`git push origin codex/complete-openvla-reproduction`被权限审核拒绝：需要可信用户明确确认具体远程目的地和上传内容。已询问是否允许上传到`Yiran-yetuser/openvla`的该分支并更新PR #1（仅代码、Notebook、小型诊断证据，不含模型/数据/视频/test.jpg）；尚未收到确认。不得把自动目标续接消息视为对该询问的答复，也不得通过其他上传方法绕过拒绝。待用户明确确认后再执行推送与PR更新，准备好的PR说明位于`/tmp/openvla-pr1-bounded-closeout.md`（临时文件可能在重启后消失，必要时按已核验证据重新整理）。
+
+本轮只读再次核验：宿主没有`run_libero_eval.py`或本项目训练/诊断worker，也没有Fast3R相关worker；因此不存在可等待的“正在运行完整评测”。原始日志与已提交审计SHA完全一致，仍是382次、5成功、7个完整任务汇总，final_success_rate=null。PR #1保持OPEN，远程头`9179cf26c740f8c5f98ded5e20ff8050d523b970`，未包含本轮新提交。完整500目标不能标记完成，亦不能把本轮4次rollout替代它。用户之前停止全量评测并选择当前有界诊断，重新扩展训练/500评测需新的实验选择，不擅自启动。当前工作区仅有用户未跟踪`test.jpg`，不得暂存或修改。
+
 ## 当前阶段完成：正式推理入口与4次有界闭环对照
 
 用户明确选择先修正推理入口、再小规模闭环验证。`get_vla_action`现在根据模型的准备标志自动进入BF16 autocast；默认路径不启用该上下文，单元测试已验证。训练任务实际是“pick up the black bowl next to the cookie box and place it on the plate”，已用LIBERO benchmark元数据确认对应task ID 6，不能沿用旧task0控制。
