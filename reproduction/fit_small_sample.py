@@ -23,6 +23,8 @@ from reproduction.audit_training_runtime import file_hash, preflight
 SOURCE = ROOT / "adapter-tmp/libero_spatial_full_paper/openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+lora-r32+dropout-0.0+q-4bit--image_aug"
 RUN = ROOT / "runs/small_fit_v1"
 RESULT = ROOT / "reproduction/results/small_fit_v1.json"
+CONTROL_RUN = ROOT / "runs/small_fit_lr5e4_v1"
+CONTROL_RESULT = ROOT / "reproduction/results/small_fit_lr5e4_v1.json"
 
 
 def atomic_json(path, value):
@@ -50,17 +52,45 @@ def verify_snapshot(path, expected_spec):
     return record
 
 
-def plan_spec(checkpoint, updates, learning_rate):
+def plan_spec(checkpoint, updates, learning_rate, experiment="small_fit_v1"):
     if not 1 <= updates <= 50:
         raise ValueError("This probe is bounded to 1..50 optimizer updates")
-    if learning_rate != 1e-4:
-        raise ValueError("v1 uses fixed lr1e-4; changing it requires a new version")
+    rates = {"small_fit_v1": 1e-4, "small_fit_lr5e4_v1": 5e-4}
+    if experiment not in rates or learning_rate != rates[experiment]:
+        raise ValueError("Learning rate must match the explicitly selected bounded experiment")
+    if experiment == "small_fit_lr5e4_v1" and updates != 50:
+        raise ValueError("Learning-rate control must match the reference's 50-update budget")
     return {"schema_version": 1, "source_checkpoint": str(checkpoint.resolve()),
             "optimizer_updates": updates, "learning_rate": learning_rate,
             "fit_frames": 16, "microbatch": 2, "accumulation": 8,
             "augmentation": False, "nf4": True, "double_quant": False,
             "seed": 7, "milestones": sorted({0, min(10, updates), min(25, updates), updates}),
             "claim": "memorization probe; no generalization or rollout success claim"}
+
+
+def matched_control_spec(spec, reference_spec):
+    """All actual configuration fields except learning rate must agree."""
+    if spec["learning_rate"] != 5e-4 or reference_spec["learning_rate"] != 1e-4:
+        raise ValueError("Expected the fixed 5e-4 versus 1e-4 comparison")
+    if {k: v for k, v in spec.items() if k != "learning_rate"} != {
+            k: v for k, v in reference_spec.items() if k != "learning_rate"}:
+        raise ValueError("Control changes more than learning rate")
+
+
+def control_reference(spec):
+    reference = json.loads(RESULT.read_text())
+    verification = json.loads((ROOT / "reproduction/results/small_fit_verification_v1.json").read_text())
+    if (verification["status"] != "pass" or file_hash(RESULT) != verification["result_sha256"]
+            or reference["status"] != "completed"):
+        raise ValueError("The completed reference evidence failed integrity verification")
+    matched_control_spec(spec, reference["spec"])
+    return reference
+
+
+def matched_initial_evaluation(evaluation, reference):
+    """Fail before any update if token/action/frame evidence does not match."""
+    if evaluation != reference["evaluations"][0]:
+        raise ValueError("Step0 differs from the reference; diagnose before optimizer updates")
 
 
 def worker(args, spec):
@@ -83,6 +113,8 @@ def worker(args, spec):
         hashes = {name: file_hash(args.checkpoint / name) for name in
                   ("adapter_model.safetensors", "adapter_config.json", "dataset_statistics.json")}
         spec = {**spec, "original_sha256": hashes}
+        if args.experiment == "small_fit_lr5e4_v1":
+            control_reference(spec)
         if (args.run / "spec.json").exists():
             if json.loads((args.run / "spec.json").read_text()) != spec:
                 raise ValueError("Run specification changed")
@@ -254,7 +286,10 @@ def execute_fit(args, spec, state, snapshot):
         print(f"Checkpoint committed: {step}; {json.dumps(evaluation['summary'])}", flush=True)
 
     if not record:
-        save(0, evaluate(0))
+        initial = evaluate(0)
+        if args.experiment == "small_fit_lr5e4_v1":
+            matched_initial_evaluation(initial, control_reference(spec))
+        save(0, initial)
     state["completed_updates_in_memory"] = start_step
     attempt = f"attempt-{time.time_ns()}"
     with (args.run / f"{attempt}-losses.jsonl").open("x") as log:
@@ -306,9 +341,16 @@ def execute_fit(args, spec, state, snapshot):
               "status": "completed" if equal else "completed_loader_difference_requires_diagnosis",
               "limits": ["16-frame memorization probe, not policy improvement", "no random augmentation; no center crop",
                          "8 probe frames were seen by the original full-data adapter, not held out",
-                         "lr1e-4 is a diagnostic choice, not a learning-rate ablation",
+                         ("paired lr5e-4 control; no causal claim about historical training"
+                          if args.experiment == "small_fit_lr5e4_v1" else
+                          "lr1e-4 is a diagnostic choice, not a learning-rate ablation"),
                          "resume uses completed adapter+optimizer+RNG snapshots; bitwise determinism not guaranteed",
                          "no simulator rollout or paper success-rate claim"]}
+    if args.experiment == "small_fit_lr5e4_v1":
+        control_reference(spec)
+        report["control_reference"] = {"path": str(RESULT), "sha256": file_hash(RESULT),
+                                       "only_configuration_difference": "learning_rate",
+                                       "step0_exactly_matches_reference": True}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with args.output.open("x") as handle:
         json.dump(report, handle, indent=2, allow_nan=False)
@@ -320,15 +362,22 @@ def execute_fit(args, spec, state, snapshot):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--checkpoint", type=Path, default=SOURCE)
-    parser.add_argument("--run", type=Path, default=RUN)
-    parser.add_argument("--output", type=Path, default=RESULT)
+    parser.add_argument("--experiment", choices=("small_fit_v1", "small_fit_lr5e4_v1"), default="small_fit_v1")
+    parser.add_argument("--run", type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--updates", type=int, default=50)
-    parser.add_argument("--learning-rate", type=float, default=1e-4)
+    parser.add_argument("--learning-rate", type=float)
     parser.add_argument("--execute", action="store_true")
     parser.add_argument("--launch", action="store_true")
     parser.add_argument("--resume", action="store_true")
     args = parser.parse_args()
-    spec = plan_spec(args.checkpoint, args.updates, args.learning_rate)
+    control = args.experiment == "small_fit_lr5e4_v1"
+    args.run = args.run or (CONTROL_RUN if control else RUN)
+    args.output = args.output or (CONTROL_RESULT if control else RESULT)
+    if control and (args.run.resolve() != CONTROL_RUN or args.output.resolve() != CONTROL_RESULT):
+        raise ValueError("Control must use its independent versioned run/result paths")
+    args.learning_rate = args.learning_rate if args.learning_rate is not None else (5e-4 if control else 1e-4)
+    spec = plan_spec(args.checkpoint, args.updates, args.learning_rate, args.experiment)
     if args.launch:
         args.run.mkdir(parents=True, exist_ok=True)
         if args.output.exists():
@@ -343,7 +392,7 @@ def main():
                 return
         command = [sys.executable, str(Path(__file__).resolve()), "--checkpoint", str(args.checkpoint),
                    "--run", str(args.run), "--output", str(args.output), "--updates", str(args.updates),
-                   "--learning-rate", str(args.learning_rate), "--execute"]
+                   "--learning-rate", str(args.learning_rate), "--experiment", args.experiment, "--execute"]
         if args.resume:
             command.append("--resume")
         with (args.run / f"worker-{time.time_ns()}.log").open("x") as handle:

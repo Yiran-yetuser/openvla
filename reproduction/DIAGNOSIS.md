@@ -144,3 +144,15 @@ GPU空闲后执行，未抢占Fast3R。真实报告 `results/training_chain_runt
 **诊断结论：** 当前数据监督、优化和QLoRA组合能把16帧拟合至动作token全对，并摆脱这些帧的近零运动；“该配置根本无法学到动作”不受此证据支持。probe没有对应提高且连续L1后期变差，提示有限样本记忆/跨帧迁移不足，而非已验证泛化。probe也曾被原全量adapter见过，不能称held-out。此结果不能确认历史失败的唯一原因、不能测量4bit训练的损失、不能把lr1e-4当学习率消融；无随机增强/无中心裁剪/新AdamW的联合改变尚未分离。
 
 本轮完成后关闭接手自动化，保留结果、四个checkpoint和所有日志，不启动长训练或500评测。下一步建议用户选择一个单因素有界实验：保持这16帧、同一源adapter与所有设置，只将lr从1e-4改为历史5e-4，使用独立run检查同节点拟合趋势与迁移；它只能比较本实验内的学习率影响，不能直接复原历史训练。真正泛化验证仍需按episode独立划分训练/验证集，不能用这8个probe替代。
+
+## 用户授权继续：lr5e-4 单因素有界对照（2026-10-02，进行中）
+
+启动 `small_fit_lr5e4_v1`，独立run/result，不从前轮step050继续；同原源adapter与SHA256、同帧/监督/新AdamW/seed7/NF4/BF16/doubleFalse/无增强/无裁剪，仅lr5e-4替代1e-4，仍最多50更新。启动时GPU空闲，磁盘约46GB可用，没有抢占Fast3R。
+
+`results/small_fit_lr5e4_start_v1.json` 已核验第0步完整snapshot全部保护文件hash、原权重hash、spec仅lr不同、24帧全部输出逐值匹配参考。脚本在第一次更新前强制匹配，失败即停止；已进入真实参数更新，但不把进行中的loss当最终结果。原small_fit_v1报告与checkpoint不变。
+
+新增只读 `compare_small_fit_lr.py`，最终校验frame/spec/hash、独立重算动作指标与分组汇总，比较0/10/25/50和生产loader差异；缺少最终报告就报错，不补造。输出独占创建，不覆盖证据。22项CPU测试通过，包括控制组配置/起点匹配、生产loader标识和真实参考摘要反篡改检查；这不是尚在运行的GPU对照已经完成。
+
+已核验第0/10步完整snapshot文件hash、frame身份及原始目标，见 `results/small_fit_lr5e4_milestone10_v1.json`。第10步lr5e-4 fit token准确率100%、运动MAE0.001350（参考lr1e-4同节点97.32%、0.005097）；probe33.93%、0.070397（参考32.14%、0.092145）。在这个中间节点较大学习率更快拟合，不支持“小样本中5e-4必然学不会”的解释；不是最终对照，更不是历史全量训练或独立泛化结论。
+
+仅一seed/每lr一run，最多只能判断固定样本在该对照内的敏感性；不能证明历史5e-4训练必然有问题，也不能推断泛化/任务成功率。8probe曾被原adapter见过，不能标held-out。最终报告尚待 `results/small_fit_lr5e4_v1.json`，真实比较输出目标 `results/small_fit_lr_comparison_v1.json`。新每小时接手heartbeat已创建，沿用额度边界、静默策略；收尾删除，不自动扩大实验。

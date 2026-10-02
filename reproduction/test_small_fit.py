@@ -3,7 +3,8 @@ import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
-from reproduction.fit_small_sample import atomic_json, plan_spec, completed_snapshot, verify_snapshot
+from reproduction.fit_small_sample import (atomic_json, plan_spec, completed_snapshot, verify_snapshot,
+                                          matched_control_spec, matched_initial_evaluation)
 from reproduction.audit_training_runtime import file_hash
 
 
@@ -16,6 +17,28 @@ class SmallFitGuardsTest(unittest.TestCase):
     def test_fixed_learning_rate(self):
         with self.assertRaises(ValueError):
             plan_spec(Path("fixture"), 50, 5e-4)
+
+    def test_explicit_control_changes_only_learning_rate(self):
+        reference = plan_spec(Path("fixture"), 50, 1e-4)
+        control = plan_spec(Path("fixture"), 50, 5e-4, "small_fit_lr5e4_v1")
+        matched_control_spec(control, reference)
+        for updates, rate in ((25, 5e-4), (50, 1e-4)):
+            with self.assertRaises(ValueError):
+                plan_spec(Path("fixture"), updates, rate, "small_fit_lr5e4_v1")
+
+    def test_control_rejects_other_configuration_changes(self):
+        reference = plan_spec(Path("fixture"), 50, 1e-4)
+        control = plan_spec(Path("fixture"), 50, 5e-4, "small_fit_lr5e4_v1")
+        with self.assertRaises(ValueError):
+            matched_control_spec({**control, "augmentation": True}, reference)
+        with self.assertRaises(ValueError):
+            matched_control_spec({**control, "source_checkpoint": "another"}, reference)
+
+    def test_control_step_zero_must_match(self):
+        reference = {"evaluations": [{"step": 0, "rows": [{"action": [0]}]}]}
+        matched_initial_evaluation(reference["evaluations"][0], reference)
+        with self.assertRaises(ValueError):
+            matched_initial_evaluation({"step": 0, "rows": [{"action": [1]}]}, reference)
 
     def test_atomic_progress(self):
         with TemporaryDirectory() as directory:
