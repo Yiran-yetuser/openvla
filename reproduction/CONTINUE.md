@@ -1,6 +1,14 @@
-# OpenVLA 接手记录（2026-10-02）
+# OpenVLA 接手记录（2026-10-03）
 
-## 当前新授权：验证可选推理兼容路径（等待Fast3R结束）
+## 当前阶段：可选 k-bit 推理兼容路径（已完成）
+
+Fast3R worker及锁进程退出、宿主GPU空闲后，仅运行一次30帧推理核验。证据`reproduction/results/clean_task_kbit_inference_v1.json`状态为`verified`：默认生产路径重算动作与保存production动作30/30一致；兼容准备路径与保存training动作30/30一致；两种保存动作彼此27/30一致（原3个训练monitor差异仍保留）。base及adapter哈希未变，checkpoint_modified=false，optimizer_updates=0，rollouts=0。只证明选定演示帧推理可复现，不证明闭环或全任务成功率，不是dtype单因素因果结论。
+
+首次运行在沙箱内nvidia-smi预检失败，模型未加载；随后宿主再次确认Fast3R和锁进程已退出、GPU空闲，并在宿主可查询GPU的环境成功运行。额度可用；没有用reset credit或付费API。真实结果已收录到Notebook/DIAGNOSIS；33项CPU测试、AST、Notebook schema及reader核验通过。尚需提交推送现有分支并更新PR #1；完成后删除heartbeat。不要启动新训练或闭环rollout。
+
+## 实验启动前的记录（历史，Fast3R阻塞已解除）
+
+以下段落记录验证启动前的计划与Fast3R阻塞状态；不代表当前状态。当前结果和最终状态以上方及Notebook第37节为准。
 
 用户2026-10-03要求继续。clean_task_v1已完成，不可重训；此前建议的下一步是从可选的 `prepare_for_kbit_inference` 路径开始。代码现已在 `openvla_utils.get_vla` 和 LIBERO `GenerateConfig`/CLI加入**默认False**开关；开启要求NF4 4bit及LoRA checkpoint，先完成训练准备后eval；日志和action trace明确记录标志。默认路径不变。新增 `reproduction/verify_kbit_inference_path.py` 只读对照0/24训练monitor+6验证stage frames，比较保存的生产动作和准备后的训练动作；脚本有GPU忙守卫，无梯度更新、无模拟器rollout、无checkpoint写入，输出独占创建 `results/clean_task_kbit_inference_v1.json`。
 

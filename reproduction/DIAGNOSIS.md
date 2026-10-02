@@ -224,8 +224,10 @@ loss在更新之前测量，动作表在更新之后；第0步未单独测loss�
 
 收尾已通过32项CPU测试、26个reproduction Python AST、67-cell Notebook schema/全部code AST；数据划分与最终reader的执行输出与存储值精确一致，重载诊断四条匹配标志独立重算通过。应用确认heartbeat `openvla` deleteStatus=deleted；没有新的训练任务。
 
-## 可选k-bit兼容推理路径（实现完成，30帧GPU核验等待Fast3R结束）
+## 可选k-bit兼容推理路径：30帧核验已完成（2026-10-03）
 
 依据六帧对照，新增显式`prepare_for_kbit_inference`，默认False；只支持4bit LoRA。它用PEFT `prepare_model_for_kbit_training(...,use_gradient_checkpointing=True)`准备加载后的adapter并回到eval模式。LIBERO CLI中参数可见，log/trace记录开关。默认生产逻辑没有改动。新增`test_kbit_inference_preparation.py`一项CPU界面契约测试通过。本轮实际帧核验入口 `verify_kbit_inference_path.py --execute` 只比较30个演示图像的AR预测和已有训练/生产报告，no update/no rollout/独占结果。
 
-**尚无此路径的30帧结果。** 当前被Fast3R宿主数据准备进程PID8828阻塞，遵照用户此前要求不抢占。`run_libero_eval --help`能列出新flag，但在Numba写入目录调整为`/tmp`后，脚本在help输出结束时仍遇环境库`free(): invalid pointer` exit134，尚未验证eval训练集成运行。不能把静态CLI列表写成30帧功能通过；下一接手先确认Fast3R结束，再做有界核验。
+Fast3R及锁进程退出并确认GPU空闲后，运行`reproduction/verify_kbit_inference_path.py --execute`。结果`results/clean_task_kbit_inference_v1.json`逐帧证实：默认生产路径与已保存production动作30/30一致；兼容训练准备路径与已保存training动作30/30一致；原production/training动作相互27/30一致，仍保留3个训练monitor差异。base哈希未变，adapter/checkpoint未修改，0次optimizer更新、0次rollout。
+
+这只解释并提供了在所选30个既有演示画面上复现各自预测路径的显式兼容入口；不证明闭环成功率、全任务表现、所有输入等价或历史低成功率唯一由dtype造成。帧集合是24训练monitor+6个验证episode阶段帧，不是独立held-out集。PEFT准备联合改变非量化参数dtype、冻结/checkpoint设置，未做单因素拆分。开关默认关闭，默认生产行为未改变。首次调用在沙箱的nvidia-smi预检处退出且未加载模型；之后宿主核实Fast3R/锁已退出、GPU空闲，使用可见宿主GPU的环境完成验证。未训练、未写checkpoint、未启动仿真rollout。
