@@ -4,7 +4,7 @@
 
 Fast3R worker及锁进程退出、宿主GPU空闲后，仅运行一次30帧推理核验。证据`reproduction/results/clean_task_kbit_inference_v1.json`状态为`verified`：默认生产路径重算动作与保存production动作30/30一致；兼容准备路径与保存training动作30/30一致；两种保存动作彼此27/30一致（原3个训练monitor差异仍保留）。base及adapter哈希未变，checkpoint_modified=false，optimizer_updates=0，rollouts=0。只证明选定演示帧推理可复现，不证明闭环或全任务成功率，不是dtype单因素因果结论。
 
-首次运行在沙箱内nvidia-smi预检失败，模型未加载；随后宿主再次确认Fast3R和锁进程已退出、GPU空闲，并在宿主可查询GPU的环境成功运行。额度可用；没有用reset credit或付费API。真实结果已收录到Notebook/DIAGNOSIS；33项CPU测试、AST、Notebook schema及reader核验通过。尚需提交推送现有分支并更新PR #1；完成后删除heartbeat。不要启动新训练或闭环rollout。
+首次运行在沙箱内nvidia-smi预检失败，模型未加载；随后宿主再次确认Fast3R和锁进程已退出、GPU空闲，并在宿主可查询GPU的环境成功运行。额度可用；没有用reset credit或付费API。真实结果已收录到Notebook/DIAGNOSIS；33项CPU测试、AST、Notebook schema及reader核验通过。commit `2fdaf56` 已推送至 `codex/complete-openvla-reproduction`，PR #1 已更新；heartbeat `fast3r-openvla` 已删除。不要启动新训练或闭环rollout。
 
 ## 实验启动前的记录（历史，Fast3R阻塞已解除）
 
