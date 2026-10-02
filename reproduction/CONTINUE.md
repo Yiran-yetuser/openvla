@@ -7,18 +7,22 @@
 官方NF4对照与当前训练链路体检已完成，见DIAGNOSIS.md和notebook第25–30节；禁止重跑或覆盖这些结果。
 原权重、数据、test.jpg和历史日志必须保留。GPU被其他作业占用时不抢占。
 
-## 当前运行：small_fit_lr5e4_v1 单因素对照
+## 当前阶段已完成：small_fit_lr5e4_v1（禁止重新启动）
+
+最终状态completed、50更新；`results/small_fit_lr5e4_v1.json` 和 `results/small_fit_lr_comparison_v1.json` 已真实产生，完整比较verified_comparison且local_snapshot_verification=True。两组8个snapshot、源hash、24帧身份/真实动作/指标摘要及各50条loss已核验；原权重未变。两组fit最终token100%、运动MAE0.001350；probe5e-4 token28.57%、MAE0.078811/L1 0.188476，对照1e-4为32.14%、0.091907/0.177316，不能简单认定整体优劣或历史根因。两个loader自回归动作重载一致，teacher差异已记录。
+
+**GPU worker已结束，不再launch/resume，不重跑已有结果。下一实验等待用户选择。** 下列配置与启动入口仅保留作历史说明；不要把已完成阶段重复运行。22项CPU测试、Notebook schema/AST及最终reader校验在收尾再核验。
 
 用户2026-10-02再次授权继续。GPU空闲、磁盘约46GB可用后，启动独立worker（初始PID42189，02:48:09 UTC即上海10:48:09）；当前状态以progress/宿主ps为准，不凭旧PID认定仍在运行。
 
-- 唯一新GPU入口：`fit_small_sample.py --experiment small_fit_lr5e4_v1 --launch`，Python和离线环境与下述相同；需要有界恢复时增加`--resume`，不得双开。
+- 历史GPU入口：`fit_small_sample.py --experiment small_fit_lr5e4_v1 --launch`。本阶段已完成，不要再运行；恢复机制只适用于未完成且已核验的snapshot，不能当继续超过50更新的入口。
 - 同原3500-step源adapter、同16拟合帧、同8个原adapter见过的probe、batch2×累积8、NF4/BF16/doubleFalse/seed7、新AdamW、无增强/无裁剪，最多50更新；**仅学习率改为5e-4**。不能从上轮step050继续，必须以同源权重开始对照。
 - `runs/small_fit_lr5e4_v1/progress.json` / 独立日志及step_XXX；最终 `results/small_fit_lr5e4_v1.json`。不要读取旧run当新run。结果存在先核验，不覆盖、不重训。
 - 起始完整snapshot已核验，24帧所有第0步结果与参考完全相同，见 `results/small_fit_lr5e4_start_v1.json`；此文件不是最终结果。spec除lr外全部一致，源hash核验，22项CPU测试通过。
 - 第10步中间报告 `results/small_fit_lr5e4_milestone10_v1.json` 已核验hash/frame：fit token100%、运动MAE0.001350，probe token33.93%、运动MAE0.070397；同节点参考fit97.32%、运动0.005097、probe32.14%/0.092145。这是中间节点，不能替代最终50步结论。
 - 最终运行只读比较：`python reproduction/compare_small_fit_lr.py --verify-local --output reproduction/results/small_fit_lr_comparison_v1.json`。输出存在则只读核验、禁止覆盖。校验两report/frame/metric、8个完整snapshot、源hash与真实loss；loss在更新前，动作指标在更新后，不把update1的loss冒充step0。
 - 基于真实0/10/25/50趋势更新notebook/DIAGNOSIS。区分teacher-forcing/自回归/生产loader；8probe不是held-out，本实验不能充分解释历史失败。仅一seed/每lr一run，不能声称统计显著性。
-- 本聊天每小时heartbeat已创建，id=`openvla`，忙/不变静默，完成/失败/必要操作才通知。额度不可用不绕过、不用重置券/付费API/改模型，后续定时有机会接手，但不能保证刷新瞬间恢复。完成并汇报后删除，不扩大训练/500评测。
+- 本阶段曾创建每小时heartbeat，id=`openvla`；2026-10-02收尾时应用工具已确认deleteStatus=deleted。不扩大训练/500评测，下一实验待用户选择。额度不可用不绕过、不用重置券/付费API/改模型。
 
 ## 已完成阶段：small_fit_v1（禁止重新启动）
 
@@ -56,7 +60,7 @@ env HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 PYTHONPATH=/home/yyz/openvla \
 
 ## 额度恢复边界
 
-small_fit_v1的旧heartbeat已删除；当前用户授权的small_fit_lr5e4_v1已重新创建每小时heartbeat，automation id=`openvla`。完成此对照后删除，不自动扩展下一实验；接手记录和checkpoint保留。
+small_fit_v1的旧heartbeat已删除；本轮small_fit_lr5e4_v1也已完成，应用已确认删除其heartbeat（id=`openvla`）。不自动扩展下一实验；接手记录和checkpoint保留。
 定时任务是后续接手机会，不是额度绕过，也不保证刷新瞬间或原中断点无缝恢复。
 独立Python worker不调用Codex/API，但仍依赖机器不关机、不休眠；checkpoint用于进程中断后的恢复。
 接手定时任务依赖电脑开机、桌面应用运行及可用额度。忙或无进展不通知，仅新证据、完成、失败或必要用户选择时通知。
