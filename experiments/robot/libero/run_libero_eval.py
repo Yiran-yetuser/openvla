@@ -19,6 +19,7 @@ Usage:
 
 import os
 import json
+import hashlib
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -195,7 +196,8 @@ def eval_libero(cfg: GenerateConfig) -> None:
             env.reset()
 
             # Set initial states
-            obs = env.set_init_state(initial_states[episode_idx])
+            init_state = np.asarray(initial_states[episode_idx])
+            obs = env.set_init_state(init_state)
 
             # Setup
             t = 0
@@ -248,6 +250,8 @@ def eval_libero(cfg: GenerateConfig) -> None:
                         task_description,
                         processor=processor,
                     )
+                    if cfg.trace_actions:
+                        policy_action = action.copy()
 
                     # Normalize gripper action [0,1] -> [-1,+1] because the environment expects the latter
                     action = normalize_gripper_action(action, binarize=True)
@@ -259,6 +263,8 @@ def eval_libero(cfg: GenerateConfig) -> None:
 
                     if cfg.trace_actions:
                         action_trace.append({"step": t - cfg.num_steps_wait,
+                                             "image_sha256": hashlib.sha256(np.asarray(img).tobytes()).hexdigest(),
+                                             "policy_action": policy_action.tolist(),
                                              "simulator_action": action.tolist(),
                                              "eef_pos": obs["robot0_eef_pos"].tolist(),
                                              "gripper_qpos": obs["robot0_gripper_qpos"].tolist()})
@@ -289,9 +295,12 @@ def eval_libero(cfg: GenerateConfig) -> None:
                 with trace_path.open("x") as handle:
                     json.dump({"task_id": task_id, "instruction": task_description,
                                "trial": episode_idx, "success": bool(done), "error": episode_error,
+                               "init_state_sha256": hashlib.sha256(init_state.tobytes()).hexdigest(),
+                               "init_state_shape": list(init_state.shape), "init_state_dtype": str(init_state.dtype),
                                "checkpoint": str(cfg.pretrained_checkpoint), "seed": cfg.seed,
                                "center_crop": cfg.center_crop, "double_quant": cfg.bnb_double_quant,
                                "prepare_for_kbit_inference": cfg.prepare_for_kbit_inference,
+                               "bf16_autocast": bool(getattr(model, "_openvla_kbit_inference_prepared", False)),
                                "actions": action_trace}, handle, indent=2)
 
             # Save a replay video of the episode

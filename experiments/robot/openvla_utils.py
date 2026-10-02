@@ -3,6 +3,7 @@
 import json
 import os
 import time
+from contextlib import nullcontext
 from pathlib import Path
 
 import numpy as np
@@ -35,6 +36,7 @@ def prepare_vla_for_kbit_inference(vla):
     from peft import prepare_model_for_kbit_training
 
     vla = prepare_model_for_kbit_training(vla, use_gradient_checkpointing=True)
+    vla._openvla_kbit_inference_prepared = True
     vla.eval()
     return vla
 
@@ -243,5 +245,8 @@ def get_vla_action(vla, processor, base_vla_name, obs, task_label, unnorm_key, c
     inputs = processor(prompt, image).to(DEVICE, dtype=torch.bfloat16)
 
     # Get action.
-    action = vla.predict_action(**inputs, unnorm_key=unnorm_key, do_sample=False)
+    context = (torch.autocast("cuda", dtype=torch.bfloat16)
+               if getattr(vla, "_openvla_kbit_inference_prepared", False) else nullcontext())
+    with torch.inference_mode(), context:
+        action = vla.predict_action(**inputs, unnorm_key=unnorm_key, do_sample=False)
     return action

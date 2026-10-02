@@ -1,0 +1,178 @@
+{
+  "schema_version": 1,
+  "status": "bounded_comparison_complete",
+  "task_id": 6,
+  "instruction": "pick up the black bowl next to the cookie box and place it on the plate",
+  "checkpoint": "/home/yyz/openvla/runs/clean_task_v1/step_050",
+  "snapshot_sha256": {
+    "adapter_model.safetensors": "d419ec119bfac0dacc301d55950d0c97bd1a6f84e9ae6cf336c5fb35c1a04c54",
+    "adapter_config.json": "fb580fac4fdc287e3f78aa65bb6000e2ee31364b6c2a303ebc7453e519ba20a9",
+    "dataset_statistics.json": "45d1b4f0b28a87bce60f5c2f4f5c22978a00668e77723da06eaea7ecd319c022",
+    "optimizer_rng.pt": "7759416d6a8793060fe20f55cbed3fc7de6d8e55864185d34731e16ddc804002",
+    "evaluation.json": "9abea19982ff9d49feeb3d34f955384123ad65f323ec2bc446cadd20b1acbbd8"
+  },
+  "source_hashes_unchanged": true,
+  "seed": 7,
+  "nf4": true,
+  "compute_dtype": "bfloat16",
+  "double_quant": false,
+  "center_crop": false,
+  "optimizer_updates": 0,
+  "rollouts": 4,
+  "matched_full_initial_states_and_first_images": true,
+  "paths": {
+    "default": {
+      "successes": 0,
+      "episodes": 2,
+      "rows": [
+        {
+          "file": "reproduction/results/sim_clean_task_v1/default/EVAL-libero_spatial-openvla-2026_10_03-05_52_28--clean_task_default_v1--task6-trial0.json",
+          "sha256": "798e66b725f28fc35ec8bf9d2bb76eb1154c7c9d50ec2ec209848c9ea9480be1",
+          "trial": 0,
+          "success": false,
+          "steps": 220,
+          "init_state_sha256": "d81530779b15be6bdfe4935a7a802102e3e3883823b29fefd40a2131e50fd515",
+          "init_state_shape": [
+            92
+          ],
+          "init_state_dtype": "float64",
+          "first_image_sha256": "038df56724054037d596da65e11a0db42490b4a649b44b6122b5b9057eb3aaa4",
+          "first_eef_pos": [
+            -0.2060284966327901,
+            -0.008319330885620752,
+            1.1800995481953256
+          ],
+          "first_gripper_qpos": [
+            0.038721886618153484,
+            -0.03872367851199141
+          ],
+          "first_policy_action": [
+            0.9345425945274969,
+            0.0015165358489634961,
+            -0.001005555828412441,
+            -0.03993392898010853,
+            -0.0005267844246881759,
+            0.0002168503291176127,
+            0.996078431372549
+          ],
+          "translation_below_0p02_fraction": 0.05909090909090909,
+          "eef_max_distance_from_start_m": 0.49914987172778796,
+          "open_gripper_command_fraction": 0.19545454545454546
+        },
+        {
+          "file": "reproduction/results/sim_clean_task_v1/default/EVAL-libero_spatial-openvla-2026_10_03-05_52_28--clean_task_default_v1--task6-trial1.json",
+          "sha256": "529b13db1164ae887cfa8bc6029fce8c176b7e39bb73b5be6d0996294f5fbf2d",
+          "trial": 1,
+          "success": false,
+          "steps": 220,
+          "init_state_sha256": "1f2318d9cbd670217d18ba98020fb95f9969550b5cb30709224eb6f2d08319cf",
+          "init_state_shape": [
+            92
+          ],
+          "init_state_dtype": "float64",
+          "first_image_sha256": "17bde7f695c781133c24c38001dc1e012dcb6b8a5be6aa7fdf6c975e666e2ebe",
+          "first_eef_pos": [
+            -0.19938740188336396,
+            0.003919127150840407,
+            1.1771551686064594
+          ],
+          "first_gripper_qpos": [
+            0.038724459777759825,
+            -0.0387211162232781
+          ],
+          "first_policy_action": [
+            0.9345425945274969,
+            0.0015165358489634961,
+            -0.001005555828412441,
+            -0.03993392898010853,
+            -0.0005267844246881759,
+            0.0002168503291176127,
+            0.996078431372549
+          ],
+          "translation_below_0p02_fraction": 0.0,
+          "eef_max_distance_from_start_m": 0.4122659367578081,
+          "open_gripper_command_fraction": 0.33181818181818185
+        }
+      ]
+    },
+    "compatible": {
+      "successes": 0,
+      "episodes": 2,
+      "rows": [
+        {
+          "file": "reproduction/results/sim_clean_task_v1/compatible/EVAL-libero_spatial-openvla-2026_10_03-05_56_32--clean_task_compatible_v1--task6-trial0.json",
+          "sha256": "35cda06a72850345cb988cd8960c5dad3ee87ee2f24b4216f3b649cbd32f6fa5",
+          "trial": 0,
+          "success": false,
+          "steps": 220,
+          "init_state_sha256": "d81530779b15be6bdfe4935a7a802102e3e3883823b29fefd40a2131e50fd515",
+          "init_state_shape": [
+            92
+          ],
+          "init_state_dtype": "float64",
+          "first_image_sha256": "038df56724054037d596da65e11a0db42490b4a649b44b6122b5b9057eb3aaa4",
+          "first_eef_pos": [
+            -0.2060284966327901,
+            -0.008319330885620752,
+            1.1800995481953256
+          ],
+          "first_gripper_qpos": [
+            0.038721886618153484,
+            -0.03872367851199141
+          ],
+          "first_policy_action": [
+            0.9345425945274969,
+            0.0015165358489634961,
+            -0.001005555828412441,
+            -0.03993392898010853,
+            -0.0005267844246881759,
+            0.0002168503291176127,
+            0.996078431372549
+          ],
+          "translation_below_0p02_fraction": 0.013636363636363636,
+          "eef_max_distance_from_start_m": 0.4998036683381502,
+          "open_gripper_command_fraction": 0.20909090909090908
+        },
+        {
+          "file": "reproduction/results/sim_clean_task_v1/compatible/EVAL-libero_spatial-openvla-2026_10_03-05_56_32--clean_task_compatible_v1--task6-trial1.json",
+          "sha256": "ceaba060600b631aab6883bad499b0434436d606f043135472808bfb5f693e7c",
+          "trial": 1,
+          "success": false,
+          "steps": 220,
+          "init_state_sha256": "1f2318d9cbd670217d18ba98020fb95f9969550b5cb30709224eb6f2d08319cf",
+          "init_state_shape": [
+            92
+          ],
+          "init_state_dtype": "float64",
+          "first_image_sha256": "17bde7f695c781133c24c38001dc1e012dcb6b8a5be6aa7fdf6c975e666e2ebe",
+          "first_eef_pos": [
+            -0.19938740188336396,
+            0.003919127150840407,
+            1.1771551686064594
+          ],
+          "first_gripper_qpos": [
+            0.038724459777759825,
+            -0.0387211162232781
+          ],
+          "first_policy_action": [
+            0.9345425945274969,
+            0.0015165358489634961,
+            -0.001005555828412441,
+            -0.03993392898010853,
+            -0.0005267844246881759,
+            0.0002168503291176127,
+            0.996078431372549
+          ],
+          "translation_below_0p02_fraction": 0.0,
+          "eef_max_distance_from_start_m": 0.4106846033549315,
+          "open_gripper_command_fraction": 0.37272727272727274
+        }
+      ]
+    }
+  },
+  "limits": [
+    "One trained task, two fixed simulator states per path; no full-suite or statistical improvement claim.",
+    "Compatibility jointly changes preparation and BF16 autocast; not a dtype-only ablation.",
+    "Checkpoint has only 50 updates on eight training episodes."
+  ]
+}

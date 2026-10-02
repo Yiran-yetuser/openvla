@@ -1,5 +1,15 @@
 # OpenVLA 接手记录（2026-10-03）
 
+## 当前阶段完成：正式推理入口与4次有界闭环对照
+
+用户明确选择先修正推理入口、再小规模闭环验证。`get_vla_action`现在根据模型的准备标志自动进入BF16 autocast；默认路径不启用该上下文，单元测试已验证。训练任务实际是“pick up the black bowl next to the cookie box and place it on the plate”，已用LIBERO benchmark元数据确认对应task ID 6，不能沿用旧task0控制。
+
+`reproduction/run_clean_task_closed_loop.py --execute`已完成，禁止重跑。原clean_task step_050、任务6、相同初始状态0/1，默认/兼容各2个rollout，共4个；seed7、NF4/BF16/doubleFalse、无裁剪。两路径均0/2、每trial220个动作、没有runtime exception。末端最大移动默认499.150/412.266mm，兼容499.804/410.685mm，不是起始停滞。完整92维初始状态、第一张图像及机器人起点逐对一致；第一动作相同，动作分叉分别在step41/5，分叉时图像仍一致，图像随后在step42/6分叉。0次训练更新，base/完整snapshot hash未变。结果`results/clean_task_closed_loop_v1.json`；CPU逐条核验`clean_task_closed_loop_verification_v1.json`，880个policy到simulator动作（含夹爪变换）、两份文本日志及真实指标/trace hash通过。不能推出兼容路径改善成功率或历史唯一根因。当前仅50个训练更新、2个初始状态，不扩展训练/500评测。真实结果已收录Notebook第38节/DIAGNOSIS；本轮GPU worker已结束，无需等待或启动定时重跑。
+
+收尾校验：44项CPU测试、32个reproduction Python文件及两个正式入口AST、71-cell Notebook schema/全部code AST均通过；第37/38节reader输出与存储stdout逐字一致，严格完整评测reader确认旧日志未完成。本轮只提交源代码、Notebook和小型证据（4份action trace及2份文本汇总），不提交模型、数据、训练大日志、视频或用户test.jpg。当前分支`codex/complete-openvla-reproduction`，沿用PR #1；下一训练/评测扩大实验须用户选择，不从旧目标自动启动500。
+
+旧完整评测宿主已无进程；逐次审计证据`results/full_eval_log_audit_v1.json`为382次、5成功、7完整任务汇总、final_success_rate=null。完整500目标仍未达成，当前用户选择诊断前置步骤，不自动重启500。
+
 ## 当前阶段：可选 k-bit 推理兼容路径（已完成）
 
 Fast3R worker及锁进程退出、宿主GPU空闲后，仅运行一次30帧推理核验。证据`reproduction/results/clean_task_kbit_inference_v1.json`状态为`verified`：默认生产路径重算动作与保存production动作30/30一致；兼容准备路径与保存training动作30/30一致；两种保存动作彼此27/30一致（原3个训练monitor差异仍保留）。base及adapter哈希未变，checkpoint_modified=false，optimizer_updates=0，rollouts=0。只证明选定演示帧推理可复现，不证明闭环或全任务成功率，不是dtype单因素因果结论。

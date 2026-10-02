@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "status": "verified_bounded_closed_loop_comparison",
+  "report_sha256": "02e978ab2fec3feaeaf07d5e7d1e8ef7b1421441f149f8e11bb84eba83473ea2",
+  "source_hashes_verified": true,
+  "paths": {
+    "default": {
+      "episodes": 2,
+      "successes": 0,
+      "rows": [
+        {
+          "trial": 0,
+          "success": false,
+          "steps": 220,
+          "translation_below_0p02_fraction": 0.05909090909090909,
+          "eef_max_distance_from_start_m": 0.49914987172778796,
+          "open_gripper_command_fraction": 0.19545454545454546
+        },
+        {
+          "trial": 1,
+          "success": false,
+          "steps": 220,
+          "translation_below_0p02_fraction": 0.0,
+          "eef_max_distance_from_start_m": 0.4122659367578081,
+          "open_gripper_command_fraction": 0.33181818181818185
+        }
+      ]
+    },
+    "compatible": {
+      "episodes": 2,
+      "successes": 0,
+      "rows": [
+        {
+          "trial": 0,
+          "success": false,
+          "steps": 220,
+          "translation_below_0p02_fraction": 0.013636363636363636,
+          "eef_max_distance_from_start_m": 0.4998036683381502,
+          "open_gripper_command_fraction": 0.20909090909090908
+        },
+        {
+          "trial": 1,
+          "success": false,
+          "steps": 220,
+          "translation_below_0p02_fraction": 0.0,
+          "eef_max_distance_from_start_m": 0.4106846033549315,
+          "open_gripper_command_fraction": 0.37272727272727274
+        }
+      ]
+    }
+  },
+  "paired_states": [
+    {
+      "trial": 0,
+      "matched_full_initial_state_and_first_image": true,
+      "first_policy_action_equal": true,
+      "first_simulator_action_difference_step": 41,
+      "complete_simulator_action_sequence_equal": false,
+      "scope": "After actions diverge, subsequent observations can diverge too."
+    },
+    {
+      "trial": 1,
+      "matched_full_initial_state_and_first_image": true,
+      "first_policy_action_equal": true,
+      "first_simulator_action_difference_step": 5,
+      "complete_simulator_action_sequence_equal": false,
+      "scope": "After actions diverge, subsequent observations can diverge too."
+    }
+  ],
+  "limits": [
+    "One trained task, two fixed simulator states per path; no full-suite or statistical improvement claim.",
+    "Compatibility jointly changes preparation and BF16 autocast; not a dtype-only ablation.",
+    "Checkpoint has only 50 updates on eight training episodes."
+  ]
+}

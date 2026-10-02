@@ -231,3 +231,22 @@ loss在更新之前测量，动作表在更新之后；第0步未单独测loss�
 Fast3R及锁进程退出并确认GPU空闲后，运行`reproduction/verify_kbit_inference_path.py --execute`。结果`results/clean_task_kbit_inference_v1.json`逐帧证实：默认生产路径与已保存production动作30/30一致；兼容训练准备路径与已保存training动作30/30一致；原production/training动作相互27/30一致，仍保留3个训练monitor差异。base哈希未变，adapter/checkpoint未修改，0次optimizer更新、0次rollout。
 
 这只解释并提供了在所选30个既有演示画面上复现各自预测路径的显式兼容入口；不证明闭环成功率、全任务表现、所有输入等价或历史低成功率唯一由dtype造成。帧集合是24训练monitor+6个验证episode阶段帧，不是独立held-out集。PEFT准备联合改变非量化参数dtype、冻结/checkpoint设置，未做单因素拆分。开关默认关闭，默认生产行为未改变。首次调用在沙箱的nvidia-smi预检处退出且未加载模型；之后宿主核实Fast3R/锁已退出、GPU空闲，使用可见宿主GPU的环境完成验证。未训练、未写checkpoint、未启动仿真rollout。
+
+## 正式入口修正与task6闭环对照（2026-10-03）
+
+后续检查发现30帧脚本显式包裹BF16 autocast，而CLI入口原本只执行PEFT准备。现给准备后的model设置标志，`get_vla_action`据此在predict_action期间自动进入BF16 autocast；默认路径不启用该上下文。CLI的真实trace记录准备和autocast标志，另保存完整初始状态SHA、policy图像SHA及转换前policy action。3项接口测试验证默认/兼容的上下文行为。
+
+用户选择先完成此入口，再做有限闭环。训练指令经LIBERO benchmark核实为task6（黑碗在饼干盒旁），不是此前task0。`run_clean_task_closed_loop.py`在Fast3R/GPU空闲时只执行已有step_050 checkpoint、两固定初始状态、默认/兼容各2次，共4次rollout。NF4/BF16、double quant=False、seed7、无裁剪一致。结果`results/clean_task_closed_loop_v1.json`，核验`clean_task_closed_loop_verification_v1.json`。
+
+| 路径 | trial | 成功 | 动作数 | 末端离起点最大距离mm | 平移命令范数<0.02比例 |
+|---|---:|---|---:|---:|---:|
+| 默认 | 0 | False | 220 | 499.150 | 5.91% |
+| 默认 | 1 | False | 220 | 412.266 | 0.00% |
+| 兼容 | 0 | False | 220 | 499.804 | 1.36% |
+| 兼容 | 1 | False | 220 | 410.685 | 0.00% |
+
+两路径均0/2，无runtime异常；完整92维初始状态及第一张图像hash、机器人起点逐对一致。首个policy action相同；trial0/1的simulator action分别在step41/5分叉，该步图像仍相同，下一步42/6图像开始不同。这支持在本次相同观测下推理路径产生动作差异；轨迹分叉后的观测已不同，不能将全部后续动作差归因单一精度变量。不同于历史旧权重task0的起始停滞，本轮robot有明显移动但未完成目标。当前50-update单任务checkpoint和两状态不足以支持泛化/统计改进或历史唯一根因。
+
+880个policy动作到simulator动作的六维运动保持与夹爪转换逐条核验；每个trace SHA、指标重算、原base及完整snapshot（含optimizer/statistics）SHA不变。没有训练更新，原日志与视频保留。完整评测的CPU验收也改为10个独立任务各50次、逐次/累计/汇总一致且无runtime异常；旧382次日志核验`full_eval_log_audit_v1.json`的final_success_rate=null，仍未完成500次实验。
+
+收尾通过44项CPU测试、32个reproduction Python文件及两个生产入口AST、71-cell Notebook schema/全部code AST；第37/38节证据reader的实际stdout与Notebook存储输出逐字一致。闭环核验还检查两份小型文本日志逐次结果与trace成功数一致。仅提交代码与可审计小型结果，不提交权重、数据、大日志或视频。
