@@ -2,6 +2,14 @@
 
 ## 当前授权阶段：clean_task_v1（优先于下方历史说明）
 
+**本阶段已完成并核验，禁止再次launch/resume。** 最终 `results/clean_task_v1.json` 保留原状态completed_loader_difference_requires_diagnosis，独立完整核验 `clean_task_verification_v1.json` 为verified_complete（是完整性/指标核验，不是生产动作全等PASS）。四节点SHA/spec、全部真实帧/目标tokens/AR指标及50条loss/训练抽样、base不变均通过。验证teacher246帧准确率0/10/25/50为11.67%/14.34%/23.23%/32.69%；6个固定验证AR运动MAE0.134617/0.161278/0.302624/0.132556，不是稳定单调改善或闭环成绩。生产验证teacher32.75%，AR与训练路径6/6一致；训练monitor有3/24个AR不同，完整30帧27/30一致。
+
+`diagnose_clean_reload.py --execute`已完成，**不得重复运行**。只读6帧（3差异训练帧+3验证控制）、无optimizer/参数更新/rollout，结果 `results/clean_task_reload_diagnosis_v1.json`。相同训练准备loader重载6/6复现训练输出；实际生产loader6/6复现生产输出；同生产实例仅加autocast5/6匹配训练，应用完整prepare_model_for_kbit_training+autocast后6/6匹配训练。非量化FP32/BF16 dtype及gradient checkpointing标志不同；准备操作联合改变这些，不是纯dtype单因素。支持加载准备差异，不支持保存损坏，也不把这6帧结论扩展为历史唯一根因。未修改生产实现，原不一致报告保留。
+
+下一阶段需要用户选择：建议先设计显式、可选的训练准备兼容推理入口并验证全部30帧，再决定有界闭环对照或追加训练；不自动修改所有模型加载策略，不启动新训练/500评测。原checkpoint、optimizer、数据、日志/test.jpg保留。下方启动说明仅为历史记录。
+
+收尾核验：32项CPU测试、26个reproduction Python AST文件、67-cell Notebook schema/全部code语法及两个clean reader存储输出精确一致；诊断结果的四路径匹配布尔值独立重算一致。应用已确认本轮heartbeat `openvla` 删除（deleteStatus=deleted），不再定时启动此已完成阶段。
+
 用户已授权从干净 OXE 基础权重开始、同任务完整 episode 隔离验证。新 CPU 证据为 `results/clean_task_split_audit_v1.json`，完整432个episode扫描通过。同目标任务46个候选，seed7选训练episode `[185,343,79,110,72,400,75,113]`、验证 `[394,212]`；有效帧992/246（排除is_last或is_terminal），内容指纹不重叠，动作统计仅来自训练992帧。源HDF5 metadata是共享路径而非独立episode身份，也未找到/验证原HDF5文件。
 
 基础权重是本地HF缓存 `openvla/openvla-7b` revision `47a0ec7fc4ec123775a391911046cf33cf9ed83f`，3个权重分片及配置/processor/tokenizer/custom code均已SHA256核验。新建LoRA，不加载3500-step或两组small_fit adapter。这里只保证本轮LIBERO微调的episode隔离，未重新审计OXE预训练语料重叠。

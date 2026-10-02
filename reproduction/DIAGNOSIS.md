@@ -200,3 +200,26 @@ loss在更新之前测量，动作表在更新之后；第0步未单独测loss�
 新增10项CPU守卫测试（episode去重/隔离/统计/配置/训练抽样），总32项通过；它们不是GPU训练成功证据。每小时低频接手已恢复，无变化不通知，额度不足不绕过。当前训练最终指标仍待 `results/clean_task_v1.json`，不得填造。
 
 **第0步真实证据已核验：** `results/clean_task_start_v1.json` 状态verified_start_not_final。`verify_clean_task.py --start` 验证完整snapshot文件hash/spec、原base文件hash，重新CPU读取全部10条演示后核验teacher目标token/身份、AR原动作/身份与指标独立重算。未更新时训练24monitor teacher token13.10%、AR运动MAE0.150306；验证全部246帧teacher token11.67%、loss11.527381，6个验证阶段帧AR运动MAE0.134617、归一化L1 0.274609、夹爪6/6。验证teacher和AR覆盖不同，不能据此推断完整策略成绩。全部1238有效帧7动作+EOS监督检查通过；新LoRA参数110,828,288，worker已开始真实更新。最终结果尚待产生，不用逐步训练loss冒充验证改善。
+
+## 干净起点试运行完成与生产差异诊断（2026-10-02）
+
+最终真实报告 `results/clean_task_v1.json`：50次更新已完成，状态completed_loader_difference_requires_diagnosis，production_actions_equal=False；不修改原证据为PASS。`results/clean_task_verification_v1.json` 为verified_complete，仅表示四节点hash/spec、base未变、重新读取完整真实数据后的teacher身份/独立目标tokens、AR动作指标/摘要、全部50条连续loss/训练抽样通过，不表示两个loader动作全等。没有重复训练、rollout或更改历史权重。
+
+| 更新后节点 | 训练24monitor teacher准确率 | 验证246帧teacher准确率 | 验证teacher loss | 验证6帧AR运动MAE | 验证6帧AR归一化L1 | 验证6帧夹爪 |
+|---|---:|---:|---:|---:|---:|---:|
+| 0 | 13.10% | 11.67% | 11.527381 | 0.134617 | 0.274609 | 6/6 |
+| 10 | 14.29% | 14.34% | 6.681424 | 0.161278 | 0.331879 | 5/6 |
+| 25 | 24.40% | 23.23% | 3.714302 | 0.302624 | 0.579720 | 4/6 |
+| 50 | 32.14% | 32.69% | 3.251718 | 0.132556 | 0.226822 | 6/6 |
+
+以上为训练准备loader（BF16 autocast）。最终实际生产loader验证teacher准确率32.75%、loss3.253109；验证6帧AR与训练loader逐值一致。训练24monitor中3个AR动作不同，整体30帧27/30相同；差异帧为episode185/t104、79/t0、72/t0，其中185/t104六维差异最大绝对值1.108100，不把所有差异轻描淡写为小数舍入。生产训练monitor AR运动MAE0.136861，训练loader为0.132429，不能混用。
+
+真实平均训练loss在更新1/10/25/50**之前**为11.414975/7.326590/4.041071/2.797524；表中teacher/AR在对应更新后测量。第0步是评估teacher loss，不是新优化器训练loss。训练峰值PyTorch allocated8.773GiB，非系统总显存。50次更新抽样800个不同训练帧，小于一轮992帧；有效验证统计单位只有2条演示，不把246相关帧当246独立任务。验证teacher目标预测改善，6帧AR运动误差仅略降且中途变差，不能推出收敛、闭环提升或历史唯一根因。
+
+**有界只读重载诊断：** `diagnose_clean_reload.py` 在宿主GPU空闲时仅推理6帧（3差异训练帧+3验证控制），无optimizer、梯度更新、rollout或checkpoint写入，保存 `results/clean_task_reload_diagnosis_v1.json`。同训练准备loader重载6/6精确复现训练输出，同生产loader6/6复现生产输出；在同一生产实例仅加BF16 autocast，5/6匹配训练（并未全修复）；应用完整prepare_model_for_kbit_training后配合autocast，6/6匹配训练。原snapshot保护文件SHA前后不变，两路径模型/config class一致。
+
+训练准备路径非量化vision参数全部FP32（31,323,840个），生产路径有2,733,760个vision和264,108,544个其他非量化参数仍BF16；准备路径gradient_checkpointing=True，生产=False。这里计数按模型parameter张量numel，不作为实际存储/显存估计。完整准备同时改变dtype与checkpointing，未执行纯dtype/纯flag独立消融，所以不能唯一归因某层精度。证据支持本轮加载准备差异而非保存损坏；自回归早期token分叉可扩大后续动作差异是合理机制推断，未直接记录每步logit margin，不作为已测证据。
+
+**边界与下一步：** 本轮已完成有限训练、完整性核验和加载差异诊断，但未修复生产实现、未测闭环或全任务成功率。建议下一阶段先做显式可选的训练准备兼容推理入口并验证全30帧，再决定有界闭环或追加训练；需用户选择，不自动扩大。Notebook第36节记录真实结果；全部原权重/数据/日志及test.jpg保留，收尾关闭本轮自动化。
+
+收尾已通过32项CPU测试、26个reproduction Python AST、67-cell Notebook schema/全部code AST；数据划分与最终reader的执行输出与存储值精确一致，重载诊断四条匹配标志独立重算通过。应用确认heartbeat `openvla` deleteStatus=deleted；没有新的训练任务。
