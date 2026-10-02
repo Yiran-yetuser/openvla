@@ -1,5 +1,13 @@
 # OpenVLA 接手记录（2026-10-02）
 
+## 当前新授权：验证可选推理兼容路径（等待Fast3R结束）
+
+用户2026-10-03要求继续。clean_task_v1已完成，不可重训；此前建议的下一步是从可选的 `prepare_for_kbit_inference` 路径开始。代码现已在 `openvla_utils.get_vla` 和 LIBERO `GenerateConfig`/CLI加入**默认False**开关；开启要求NF4 4bit及LoRA checkpoint，先完成训练准备后eval；日志和action trace明确记录标志。默认路径不变。新增 `reproduction/verify_kbit_inference_path.py` 只读对照0/24训练monitor+6验证stage frames，比较保存的生产动作和准备后的训练动作；脚本有GPU忙守卫，无梯度更新、无模拟器rollout、无checkpoint写入，输出独占创建 `results/clean_task_kbit_inference_v1.json`。
+
+启动前实测 `run_libero_eval.py --help` 已显示flag；`NUMBA_CACHE_DIR=/tmp` 解决了Libero/robosuite只读缓存路径的首个报错，但Python解释器在输出help后因环境依赖shutdown `free(): invalid pointer` 报exit134。帮助参数本身已打印完整；OpenVLA模型尚未加载。新增flag小单元测试通过。
+
+**当前明确阻塞：** 宿主进程PID8828 `/home/yyz/miniconda3/envs/fast3r/bin/python -u scripts/prepare_co3d_continuous_v4.py` 仍运行；用户已有要求等Fast3R完成，不抢占/终止。最近nvidia-smi未列compute app，但不得把它解释为Fast3R项目任务已结束。不得启动OpenVLA 30帧GPU对照，等待宿主ps确认Fast3R worker及锁进程退出并确认GPU空闲。每小时低频接手heartbeat id=`openvla`已建立；状态无变静默，额度不可用不绕过/不用重置券/付费API/不改模型。GPU空闲后最多执行一次`verify_kbit_inference_path.py --execute`；若输出存在先核验，不覆盖不重复推理。最终根据0/30复现结果更新notebook/DIAGNOSIS/CONTINUE，跑33项CPU测试、AST、Notebook schema/reader，再commit/push现有分支、更新PR #1并删除automation。未授权闭环rollout或训练。
+
 ## 当前授权阶段：clean_task_v1（优先于下方历史说明）
 
 **本阶段已完成并核验，禁止再次launch/resume。** 最终 `results/clean_task_v1.json` 保留原状态completed_loader_difference_requires_diagnosis，独立完整核验 `clean_task_verification_v1.json` 为verified_complete（是完整性/指标核验，不是生产动作全等PASS）。四节点SHA/spec、全部真实帧/目标tokens/AR指标及50条loss/训练抽样、base不变均通过。验证teacher246帧准确率0/10/25/50为11.67%/14.34%/23.23%/32.69%；6个固定验证AR运动MAE0.134617/0.161278/0.302624/0.132556，不是稳定单调改善或闭环成绩。生产验证teacher32.75%，AR与训练路径6/6一致；训练monitor有3/24个AR不同，完整30帧27/30一致。

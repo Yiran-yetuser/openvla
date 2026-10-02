@@ -30,6 +30,15 @@ OPENVLA_V01_SYSTEM_PROMPT = (
 )
 
 
+def prepare_vla_for_kbit_inference(vla):
+    """Opt in to the same k-bit preparation used by the QLoRA training path."""
+    from peft import prepare_model_for_kbit_training
+
+    vla = prepare_model_for_kbit_training(vla, use_gradient_checkpointing=True)
+    vla.eval()
+    return vla
+
+
 def get_vla(cfg):
     """Loads and returns a VLA model from checkpoint."""
     # Load VLA checkpoint.
@@ -60,6 +69,11 @@ def get_vla(cfg):
     #   3) 12GB 显存下 base 模型需要用 4-bit NF4 量化加载。
     checkpoint_dir = Path(cfg.pretrained_checkpoint)
     is_lora_checkpoint = (checkpoint_dir / "adapter_config.json").is_file()
+    prepare_for_kbit_inference = getattr(cfg, "prepare_for_kbit_inference", False)
+    if prepare_for_kbit_inference and not cfg.load_in_4bit:
+        raise ValueError("prepare_for_kbit_inference requires load_in_4bit=True")
+    if prepare_for_kbit_inference and not is_lora_checkpoint:
+        raise ValueError("prepare_for_kbit_inference currently supports LoRA adapter checkpoints only")
     # Match the adapter and official-checkpoint controls: bare load_in_4bit
     # otherwise silently defaults to FP4 instead of the training NF4 quantizer.
     quantization_config = None
@@ -101,6 +115,9 @@ def get_vla(cfg):
         #       already be set to the right devices and casted to the correct dtype upon loading.
         if not cfg.load_in_8bit and not cfg.load_in_4bit:
             vla = vla.to(DEVICE)
+
+    if prepare_for_kbit_inference:
+        vla = prepare_vla_for_kbit_inference(vla)
 
     # Load dataset stats used during finetuning (for action un-normalization).
     dataset_statistics_path = os.path.join(cfg.pretrained_checkpoint, "dataset_statistics.json")

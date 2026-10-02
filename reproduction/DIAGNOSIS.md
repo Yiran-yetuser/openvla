@@ -223,3 +223,9 @@ loss在更新之前测量，动作表在更新之后；第0步未单独测loss�
 **边界与下一步：** 本轮已完成有限训练、完整性核验和加载差异诊断，但未修复生产实现、未测闭环或全任务成功率。建议下一阶段先做显式可选的训练准备兼容推理入口并验证全30帧，再决定有界闭环或追加训练；需用户选择，不自动扩大。Notebook第36节记录真实结果；全部原权重/数据/日志及test.jpg保留，收尾关闭本轮自动化。
 
 收尾已通过32项CPU测试、26个reproduction Python AST、67-cell Notebook schema/全部code AST；数据划分与最终reader的执行输出与存储值精确一致，重载诊断四条匹配标志独立重算通过。应用确认heartbeat `openvla` deleteStatus=deleted；没有新的训练任务。
+
+## 可选k-bit兼容推理路径（实现完成，30帧GPU核验等待Fast3R结束）
+
+依据六帧对照，新增显式`prepare_for_kbit_inference`，默认False；只支持4bit LoRA。它用PEFT `prepare_model_for_kbit_training(...,use_gradient_checkpointing=True)`准备加载后的adapter并回到eval模式。LIBERO CLI中参数可见，log/trace记录开关。默认生产逻辑没有改动。新增`test_kbit_inference_preparation.py`一项CPU界面契约测试通过。本轮实际帧核验入口 `verify_kbit_inference_path.py --execute` 只比较30个演示图像的AR预测和已有训练/生产报告，no update/no rollout/独占结果。
+
+**尚无此路径的30帧结果。** 当前被Fast3R宿主数据准备进程PID8828阻塞，遵照用户此前要求不抢占。`run_libero_eval --help`能列出新flag，但在Numba写入目录调整为`/tmp`后，脚本在help输出结束时仍遇环境库`free(): invalid pointer` exit134，尚未验证eval训练集成运行。不能把静态CLI列表写成30帧功能通过；下一接手先确认Fast3R结束，再做有界核验。

@@ -65,6 +65,7 @@ class GenerateConfig:
     load_in_8bit: bool = False                       # (For OpenVLA only) Load with 8-bit quantization
     load_in_4bit: bool = False                       # (For OpenVLA only) Load with 4-bit quantization
     bnb_double_quant: bool = True                    # Explicitly match the training recipe for diagnostics
+    prepare_for_kbit_inference: bool = False         # Opt-in: match PEFT k-bit training preparation
 
     center_crop: bool = True                         # Center crop? (if trained w/ random crop image aug)
 
@@ -99,6 +100,9 @@ def eval_libero(cfg: GenerateConfig) -> None:
     if "image_aug" in cfg.pretrained_checkpoint:
         assert cfg.center_crop, "Expecting `center_crop==True` because model was trained with image augmentations!"
     assert not (cfg.load_in_8bit and cfg.load_in_4bit), "Cannot use both 8-bit and 4-bit quantization!"
+    if cfg.prepare_for_kbit_inference:
+        assert cfg.model_family == "openvla" and cfg.load_in_4bit, \
+            "prepare_for_kbit_inference requires an OpenVLA 4-bit LoRA checkpoint"
 
     # 新增：把文件描述符软上限提到硬上限。
     # 原因：LIBERO 评测每个 episode 都会写 MP4（imageio 起 ffmpeg 子进程）、每步都创建离屏渲染上下文，
@@ -162,6 +166,7 @@ def eval_libero(cfg: GenerateConfig) -> None:
     assert selected_tasks and len(set(selected_tasks)) == len(selected_tasks)
     assert all(0 <= task_id < num_tasks_in_suite for task_id in selected_tasks)
     log_file.write(f"Selected task IDs: {selected_tasks}; trials per task: {cfg.num_trials_per_task}\n")
+    log_file.write(f"prepare_for_kbit_inference: {cfg.prepare_for_kbit_inference}\n")
     print(f"Task suite: {cfg.task_suite_name}")
     log_file.write(f"Task suite: {cfg.task_suite_name}\n")
 
@@ -286,6 +291,7 @@ def eval_libero(cfg: GenerateConfig) -> None:
                                "trial": episode_idx, "success": bool(done), "error": episode_error,
                                "checkpoint": str(cfg.pretrained_checkpoint), "seed": cfg.seed,
                                "center_crop": cfg.center_crop, "double_quant": cfg.bnb_double_quant,
+                               "prepare_for_kbit_inference": cfg.prepare_for_kbit_inference,
                                "actions": action_trace}, handle, indent=2)
 
             # Save a replay video of the episode
