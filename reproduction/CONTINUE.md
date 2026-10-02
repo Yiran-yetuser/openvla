@@ -1,5 +1,25 @@
 # OpenVLA 接手记录（2026-10-02）
 
+## 当前授权阶段：clean_task_v1（优先于下方历史说明）
+
+用户已授权从干净 OXE 基础权重开始、同任务完整 episode 隔离验证。新 CPU 证据为 `results/clean_task_split_audit_v1.json`，完整432个episode扫描通过。同目标任务46个候选，seed7选训练episode `[185,343,79,110,72,400,75,113]`、验证 `[394,212]`；有效帧992/246（排除is_last或is_terminal），内容指纹不重叠，动作统计仅来自训练992帧。源HDF5 metadata是共享路径而非独立episode身份，也未找到/验证原HDF5文件。
+
+基础权重是本地HF缓存 `openvla/openvla-7b` revision `47a0ec7fc4ec123775a391911046cf33cf9ed83f`，3个权重分片及配置/processor/tokenizer/custom code均已SHA256核验。新建LoRA，不加载3500-step或两组small_fit adapter。这里只保证本轮LIBERO微调的episode隔离，未重新审计OXE预训练语料重叠。
+
+- 唯一新训练入口 `reproduction/train_clean_task.py`，默认dry-run。`--launch`启动独立worker，最多50次更新；lr1e-4、seed7、rank32/alpha16、all-linear、batch2×累积8、NF4/BF16/doubleFalse、无增强/无裁剪。每个训练epoch独立seed打乱，仅训练帧被抽样，50更新共800帧，不到完整一轮；这是探针，不是足够训练或论文配方。第0步LoRA B全0守卫。
+- 状态 `runs/clean_task_v1/progress.json`、日志 `worker-*.log`、四节点checkpoint `step_000/010/025/050`；最终结果 `results/clean_task_v1.json`。已有结果先核验，禁止覆盖/重训。检查GPU必须宿主沙箱外只读nvidia-smi和ps；不抢占其他任务。
+- 第0/10/25/50步：验证teacher-forcing覆盖全部246帧；训练teacher仅24固定monitor帧。自回归仅24训练/6验证阶段帧，不可冒充全帧自回归或闭环成功率。最终实际生产loader重载，单独保留teacher差异，不把相同token accuracy当全部logits相等。
+- 首次worker PID30196在模型加载/更新前失败：按TFDS位置切片不等于全流episode编号，被完整指纹守卫拦截。已改完整流枚举筛选，重新CPU核验全部10条指纹及train-only统计逐值一致；拼接顺序保持manifest顺序，避免mean/std末位舍入差。保留原log与 `runs/clean_task_v1/retry-preupdate.json`，仅允许一次 `--retry-preupdate`。不降低检查标准、不删除失败证据。
+- worker结束且未完成时，只有完整snapshot spec/hash验证通过才能 `--launch --resume`；partial保留且停止等待诊断。resume尚未端到端验证；不宣称bitwise保证，不反复启动。原始base SHA前后必须一致，checkpoint必须独立。
+- 每次先查额度、progress/result；额度不可用不绕过、不用API/重置券/改模型，等下次定时接手。每小时heartbeat id=`openvla`已应用确认创建；无变化/忙保持安静，仅新证据/完成/失败/必要操作通知。收尾后删除，不扩大训练/500评测。
+- 完成后只读核验四snapshot哈希、全部50条loss/训练抽样身份、真实teacher/AR指标和生产差异，更新notebook/DIAGNOSIS/CONTINUE，运行32项CPU测试、AST、Notebook schema/reader校验；提交推送origin/codex/complete-openvla-reproduction并更新Yiran-yetuser/openvla PR #1（gh显式指定repo）。保留原权重、数据、所有日志和test.jpg。
+
+独立Python worker不调用Codex/API，但依赖电脑开机不休眠；本地定时接手依赖应用运行与可用额度，不保证额度刷新瞬间恢复。GPU忙或worker运行时不启动第二份。
+
+第0步完整snapshot已核验：`results/clean_task_start_v1.json` 为verified_start_not_final，含snapshot保护文件hash、原base hash未变、重新加载数据后逐帧身份/目标tokens以及动作指标独立重算。训练monitor24 token13.10%；验证246 teacher token11.67%、6个固定验证阶段帧AR运动MAE0.134617，均是未更新起点，不是50步结果。全部1238帧7动作+EOS监督守卫已通过，新LoRA可训练参数110,828,288；worker PID33063已进入真实参数更新，状态以progress/宿主ps为准。
+
+最终只读校验入口：`python -m reproduction.verify_clean_task --output reproduction/results/clean_task_verification_v1.json`，必须使用上述离线环境/Python。有输出先只读核验，不覆盖；最终结果缺失则不执行final验证，也不补造。它重载CPU真实帧，核验每个teacher目标token/身份、AR目标/指标/摘要、四节点SHA/spec、生产loader阶段以及全部50条loss/训练抽样。若有resume产生重复loss histories会明确失败，需按attempt/已提交snapshot审查，不能默默当50条连续日志。仅起点用`--start`的已完成记录不得反复跑。
+
 ## 当前目标与已完成结果
 
 继续12GB单卡QLoRA近似复现，先解决低成功率的证据链，不把论文成绩当本地结果。

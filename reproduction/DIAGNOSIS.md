@@ -182,3 +182,21 @@ loss在更新之前测量，动作表在更新之后；第0步未单独测loss�
 **解释：** 此单seed固定帧实验中5e-4较快记忆16帧，没有出现“较大学习率必然不能学习”的现象；后期probe token准确率较低、归一化L1较高，但运动MAE较低、夹爪正确数更多，不能简单宣布整体更好/更差。两组probe都未显示随训练loss持续下降的全面迁移改善；与过拟合/跨帧迁移不足相容，但这8帧被原全量adapter见过，不是独立泛化证据。不能将历史全量失败唯一归因于lr或4bit，也不能据此推出论文或闭环成功率。
 
 22项CPU测试通过，Notebook schema/AST及最终reader输出核验；本阶段完成后删除接手自动化，不继续训练/500评测。下一阶段需用户选择：建议从未微调LIBERO的基础权重开始，按episode隔离训练/验证并只用训练集计算统计，设计有界小规模试验。若继续从已见全部LIBERO的3500-step adapter开始，新的episode划分也不能称从未见过的held-out。另一条路线是先核查历史随机增强/裁剪影响；本轮不执行任何新GPU阶段。
+
+## 新阶段：干净基础权重与 episode 隔离（2026-10-02，尚无最终训练指标）
+
+用户授权继续后新增 `audit_episode_split.py` 和 `train_clean_task.py`，不改历史训练脚本、权重、统计或结果。完整扫描TFDS训练432个episode，目标任务“pick up the black bowl next to the cookie box and place it on the plate”有46个候选；按seed7从去除完整内容重复的候选中选择训练8条、验证2条。有效帧排除is_last或is_terminal，训练992、验证246。独占创建证据 `results/clean_task_split_audit_v1.json`，验证全部动作/state finite、episode语言一致和首末标记、全量清单、内容指纹隔离及train-only统计。它是CPU数据准备结果，不是训练完成或成功率。
+
+训练 `[185,343,79,110,72,400,75,113]`；验证 `[394,212]`。指纹包含有序双视角编码图像、raw action、state、语言和终止标记；源HDF5路径是任务文件共享metadata，不能把同路径当相同演示，也不能把不同episode index直接当独立内容。原HDF5仍未验证。本轮是探索性同任务episode验证，不是跨任务泛化，也不保证OXE预训练语料无相关数据。
+
+动作先按LIBERO规则将gripper转换为1-clip(raw,0,1)，仅训练992帧计算mean/std/min/max/q01/q99，六维运动用BOUNDS_Q99，gripper mask=False。验证六维超出训练q01/q99区间的比例依次为3.66%、0%、6.50%、2.85%、0%、4.88%；不使用验证分布重算边界。这是归一化裁剪诊断，不是预测误差。
+
+原OXE基础权重缓存revision `47a0ec7fc4ec123775a391911046cf33cf9ed83f` 的3个分片、配置、tokenizer/processor和custom code已核验哈希，索引没有LoRA张量且无adapter_config。训练新建rank32/alpha16 all-linear LoRA，不从见过全量LIBERO的旧adapter热启动。NF4/BF16/doubleFalse、batch2×累积8、lr1e-4、seed7、无增强无中心裁剪、最多50更新，独立run `runs/clean_task_v1`。抽样仅训练帧；50更新800帧少于一轮992帧，所以即使验证不佳也不能据此证明无法泛化或量化有问题。
+
+计划0/10/25/50节点：teacher-forcing评估全部246验证帧和24训练monitor帧，自回归只评估每条演示3个阶段帧（训练24/验证6）。两类指标覆盖不同，分开标注；最终生产loader重载并记录teacher与自回归差异。不自动rollout，没有本轮任务成功率。
+
+**本轮读取故障与修复：** 首次worker PID30196在任何GPU模型加载/更新前，被episode完整指纹assert拦截。TFDS全流由分片交错读取，`train[i:i+1]`不是全流第i条；切片改变参与的分片交错顺序。改为与audit相同完整流枚举，再筛选指定编号，指纹标准未放宽。全部10条指纹重新CPU核验；按manifest顺序拼接动作后train-only统计逐值一致（顺序变化可能影响mean/std浮点末位）。保留原失败日志/progress副本 `retry-preupdate.json`，仅一次有界preupdate重试。此新脚本错误不是历史3500-step失败的已证实根因。
+
+新增10项CPU守卫测试（episode去重/隔离/统计/配置/训练抽样），总32项通过；它们不是GPU训练成功证据。每小时低频接手已恢复，无变化不通知，额度不足不绕过。当前训练最终指标仍待 `results/clean_task_v1.json`，不得填造。
+
+**第0步真实证据已核验：** `results/clean_task_start_v1.json` 状态verified_start_not_final。`verify_clean_task.py --start` 验证完整snapshot文件hash/spec、原base文件hash，重新CPU读取全部10条演示后核验teacher目标token/身份、AR原动作/身份与指标独立重算。未更新时训练24monitor teacher token13.10%、AR运动MAE0.150306；验证全部246帧teacher token11.67%、loss11.527381，6个验证阶段帧AR运动MAE0.134617、归一化L1 0.274609、夹爪6/6。验证teacher和AR覆盖不同，不能据此推断完整策略成绩。全部1238有效帧7动作+EOS监督检查通过；新LoRA参数110,828,288，worker已开始真实更新。最终结果尚待产生，不用逐步训练loss冒充验证改善。
