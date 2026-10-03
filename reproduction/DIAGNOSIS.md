@@ -263,15 +263,9 @@ Fast3R及锁进程退出并确认GPU空闲后，运行`reproduction/verify_kbit_
 
 独立CPU核验`failure_diagnosis_verification_v1.json`确认880帧、230条原始专家动作、2次专家成功，新增/优化器更新/策略rollout均为0；保留原HDF5和视频，不把大文件上传到GitHub。
 
-## 40. 有界训练量扩展：实现已准备，尚未运行（2026-10-03）
+## 启动前计划：有界训练量扩展（历史记录，已完成）
 
-为回答“50次更新是否只是过短探针”，已写入`reproduction/extend_clean_task.py`和`test_clean_task_extend.py`，但本轮没有启动GPU。它从已核验的`runs/clean_task_v1/step_050`不可变分叉，父snapshot/spec/原最终报告SHA还必须匹配既有`clean_task_verification_v1.json`。先重载并逐帧比较父checkpoint的teacher/AR预测，恢复保存的AdamW状态与Torch CPU/CUDA RNG，再在完全相同的8/2 episode隔离、训练集统计、NF4/BF16/doubleFalse、rank32/alpha16、seed7、lr1e-4、无增强/无裁剪下新增150次更新，累计到200次；里程碑为50/100/150/200。父checkpoint、旧结果和partial失败证据不覆盖。保存状态和采样前缀的检查不等于已证明中断恢复或连续200步训练位级等价。
-
-该扩展仍是单任务、两条验证episode的训练量诊断，不是论文配方、全任务泛化或闭环成功率。采样前缀和历史父spec/hash已在CPU dry-run核验；扩展输出不存在，不能填写任何200步指标。2026-10-03 12:08 CST额度查询ordinaryUsageAllowed=true；12:13 CST宿主GPU的compute-app列表为空，但Fast3R仍有3个worker（PID95939/95996/115598）。当前等待的原因是用户要求等Fast3R结束，不是额度耗尽；观测记录见`clean_task_extension_preflight_v1.json`。之后须重新核实所有worker/锁和GPU，不能把空compute列表当作Fast3R完成。可用磁盘约32GiB，启动守卫要求至少10GiB。不使用免费reset credit、不抢占、不重复已完成实验。
-
-本轮明确选择的66项CPU测试通过；4个旧GPU实测脚本有导入即加载模型/执行CUDA的副作用，等待期间不运行。`verify_clean_task_extend.py`在最终报告存在后CPU重载真实帧，核验四个节点的teacher目标/AR动作指标和身份、snapshot与报告逐项一致、51..200连续loss及真实训练抽样/均值、父hash和base未变、最终生产loader差异。重复loss记录须诊断，不能静默去重或伪造完整更新序列。缺少最终结果时验收拒绝标为完成。
-
-用户已授权此扩展及上传代码、Notebook和小型诊断证据。每小时低频接手heartbeat `openvla-200`已由应用确认ACTIVE；Fast3R仍运行、GPU忙或状态无变化时静默，不重复启动。Fast3R结束且宿主GPU空闲后只启动此150次新增更新；有真实结果后补充本节、Notebook并推送现有PR #1，完成后删除heartbeat。定时接手需要电脑开机、应用运行和可用额度，不保证额度刷新瞬间接手。此前382次日志仍是未完成的全量评测（5成功、7任务汇总、final_success_rate=null），不因本轮有界证据改写。
+以下是扩展启动前的配置与等待状态快照。用户后来更正 Fast3R PID 95939/95996 为无效残留；宿主再次核实后没有需要等待的 Fast3R worker/锁，GPU空闲，才启动既有授权的150步扩展。此处原有“尚未运行/等待worker”等状态已过期，实测和核验结果见下方“200步扩展”。
 
 ## 200步扩展：有界训练量诊断（2026-10-03）
 
@@ -295,3 +289,13 @@ step200实际production no-autocast与training BF16-autocast AR动作28/30行全
 报告没有保存这两行autoregressive生成token ID，因此可定位差异但不能证明具体原因。保留原始status差异；没有追加GPU推理、闭环或新的训练，也不推断是模型损坏。完整的约1.1MB结果/验收JSON留在本机；提交的紧凑摘要为 results/clean_task_extend_summary_v1.json。
 
 完整论文评测旧日志仍只有382次、5成功、7个任务汇总，final_success_rate为null；没有启动或补齐500次。该扩展没有simulator rollout。
+
+## 26. Step-200 checkpoint：36 个未参与本轮微调的同任务 episode
+
+将 step-200 checkpoint 冻结，对任务“pick up the black bowl next to the cookie box and place it on the plate”中剩余的36个内容指纹唯一 episode 做一次性离线评估。它们没有参与本轮8/2微调/验证划分；仅可称为本轮LIBERO微调的留出数据，OXE预训练是否接触过这些episode未知。评估使用训练一致的k-bit preparation + BF16-autocast路径、训练episode统计量；完整teacher-forced覆盖4491帧，并在每个episode的早/中/晚阶段测108个autoregressive动作帧。无模型更新、无checkpoint写入、无模拟器rollout。
+
+- Teacher action-token准确率为9210/31437，即29.2967%；每episode均值29.4470%、中位数30.1883%、SD 2.6668%；每episode teacher loss均值4.797614。
+- 108个AR阶段帧的motion MAE为0.093012，normalized L1为0.192602，夹爪102/108正确。
+- 对比step200训练24帧monitor的81.55%与原2个validation episode的28.98%，新36集为29.30%。训练accuracy上升没有迁移为同等的未用episode accuracy；此同任务离线动作拟合评估不是策略成功率，也不能排除OXE预训练语料重叠。
+
+`results/clean_task_holdout_eval_v1.json`（2.6 MB逐行原始证据）留在本机；轻量 `clean_task_holdout_summary_v1.json` 与 `clean_task_holdout_verification_v1.json` 纳入仓库。独立CPU核验重算episode/token/action指标，确认36个episode id及内容指纹映射、step200 snapshot和OXE base SHA不变。该评估走训练兼容BF16路径；production no-autocast的28/30差异仍未复测。结论支持暂停单纯增加同一8集训练步数，先选定新的数据/优化实验或闭环评估范围，不自动启动500回合。

@@ -1,18 +1,18 @@
 # OpenVLA 接手记录（2026-10-03 更新）
 
-## 当前接手状态：200步扩展完成，独立完整性核验通过；production loader 动作差异仍待后续选择
+## 当前接手状态：step-200 扩展与36集留出离线评估完成；不支持训练集准确率外推
 
-用户更正：先前列出的 Fast3R PID 95939/95996 是无效残留，不代表仍有工作；复查时没有其他 Fast3R worker/锁或 GPU compute app 后，按既有授权启动本次唯一训练。没有终止任何 Fast3R 或其他项目进程，没有抢占其 GPU 任务。
+Fast3R PID 95939/95996 是无效残留；宿主复查后没有需要等待的 Fast3R worker/锁。按用户要求，在GPU空闲时完成 clean_task_extend_v1：从已核验 step 050 分叉，恢复 AdamW/Torch RNG，新加150步至累计200。四个checkpoint及51–200 loss通过独立CPU验收，父checkpoint及OXE base未变。
 
-clean_task_extend_v1 从已核验的 clean_task_v1/step_050 分叉，恢复 optimizer/RNG，新增150次更新，累计200。worker 已正常退出。step50/100/150/200 四个完整 snapshot 均保存；第一次更新前父teacher/AR预测逐帧相同；base权重与父snapshot未变；150条loss严格连续覆盖51–200。训练结果 reproduction/results/clean_task_extend_v1.json 状态为 completed_loader_difference_requires_diagnosis。独立验收 reproduction/results/clean_task_extend_verification_v1.json 为 verified_clean_task_extension，验证四快照SHA/spec、原始帧身份/targets/指标、loss/抽样、父hash和base hash。完整原始JSON保留在本机；仓库中仅提交轻量审计摘要 reproduction/results/clean_task_extend_summary_v1.json。
+固定训练24帧 monitor 的 teacher accuracy 从 step50 的32.14%升到 step200 的81.55%；但原2个 validation episode 的 accuracy 从32.69%降到28.98%，loss从3.251718升到4.857862。训练帧准确率上升没有同步出现在 validation。
 
-训练24帧monitor的teacher accuracy从32.14%升至81.55%，AR motion MAE从0.132429降至0.012485。两条episode、246帧validation的teacher accuracy从32.69%降至28.98%，teacher loss从3.251718升至4.857862；六个固定validation AR阶段帧在step200的motion MAE/L1为0.104561/0.171960，step50为0.132556/0.226822，中间节点有波动。这个单任务单seed诊断不证明跨任务泛化或闭环成功。
+随后冻结 step200，对另外36个未参与本轮LIBERO微调或验证、且内容指纹唯一的同任务episode一次性离线评估：全帧teacher accuracy为9210/31437（29.30%），每episode均值29.45%、中位数30.19%、SD2.67%；108个固定AR阶段帧motion MAE0.093012、normalized L1 0.192602、夹爪102/108正确。独立CPU核验为 `verified_clean_task_holdout_eval`。它们是相对于本轮微调的留出数据，不保证与OXE预训练语料无重叠；指标不是LIBERO闭环成功率。
 
-最终production no-autocast对照与训练BF16-autocast动作28/30行全等：train 22/24、validation 6/6。两个不同帧均在episode113：timestep0动作最大差0.343059，teacher-forced预测在第0 token不同且生产token与target相同；timestep122只在动作维度5相差0.001956，teacher-forced token相同。报告未保存自回归生成token ID，故具体分歧机制未定。该loader parity结果仍失败，不称推理全等，也不追加训练掩盖差异。
+step200 production no-autocast 对训练BF16-autocast动作仍仅28/30行全等，episode113/t0与t122两帧差异未定位到AR首个分叉token。本轮留出评估走训练兼容BF16路径，没有重测生产no-autocast路径，也没有任何优化器更新或simulator rollout。
 
-本阶段无simulator rollout或500-rollout评测。旧全量日志仍为382次、5成功、7个任务汇总、final_success_rate=null；旧500目标仍阻塞，不能自动重启。原始base、数据/HDF5、checkpoint、日志、视频和用户test.jpg均不上传。下一步若要排查loader根因、扩展训练或运行模拟器，须先由用户选择明确的新范围。
+单纯延长同一8集训练步数没有得到留出accuracy提升。接下来应在新训练介入或闭环评测间明确选定范围；500回合旧全量评测仍停在382次、5成功、7个任务汇总、final_success_rate=null，不自动续跑。原始逐帧holdout JSON、checkpoint、数据/HDF5、日志、视频及用户`test.jpg`留在本机。
 
-## 当前阶段完成：正式推理入口与4次有界闭环对照
+## 已完成历史阶段：正式推理入口与4次有界闭环对照
 
 用户明确选择先修正推理入口、再小规模闭环验证。`get_vla_action`现在根据模型的准备标志自动进入BF16 autocast；默认路径不启用该上下文，单元测试已验证。训练任务实际是“pick up the black bowl next to the cookie box and place it on the plate”，已用LIBERO benchmark元数据确认对应task ID 6，不能沿用旧task0控制。
 
