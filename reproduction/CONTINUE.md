@@ -14,6 +14,8 @@
 
 应用已确认创建并启用每小时接手heartbeat `openvla-200`，在本聊天等Fast3R结束后再启动上述唯一实验；额度不可用留给后续运行，不用重置权益。worker健康/忙/等待/状态无变化静默；完成、失败、实质新证据或必要用户选择才通知。训练与CPU核验完成后更新第40节/DIAGNOSIS、提交推送同分支并更新PR #1，然后删除这个heartbeat。原权重、数据、checkpoint、日志、视频和用户test.jpg保留。
 
+本轮代码与专家/视频诊断证据已提交并推送：`99fdb10`，远程branch和PR #1 head已核对一致，PR描述已更新。收尾66项显式CPU测试、44个Python AST、75-cell Notebook schema/全部code AST及第37–40节4个reader实际stdout/存储输出核验通过；已有视频/专家证据只读重验通过，没有重新仿真。12:24 CST的宿主复核仍是上述3个Fast3R worker活跃，GPU compute-app为空，扩展仍未启动；当前唯一未跟踪文件为用户`test.jpg`，未上传。后续接手以实时状态为准。
+
 ## 当前阶段完成：正式推理入口与4次有界闭环对照
 
 用户明确选择先修正推理入口、再小规模闭环验证。`get_vla_action`现在根据模型的准备标志自动进入BF16 autocast；默认路径不启用该上下文，单元测试已验证。训练任务实际是“pick up the black bowl next to the cookie box and place it on the plate”，已用LIBERO benchmark元数据确认对应task ID 6，不能沿用旧task0控制。
