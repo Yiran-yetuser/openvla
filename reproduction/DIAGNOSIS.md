@@ -272,3 +272,26 @@ Fast3R及锁进程退出并确认GPU空闲后，运行`reproduction/verify_kbit_
 本轮明确选择的66项CPU测试通过；4个旧GPU实测脚本有导入即加载模型/执行CUDA的副作用，等待期间不运行。`verify_clean_task_extend.py`在最终报告存在后CPU重载真实帧，核验四个节点的teacher目标/AR动作指标和身份、snapshot与报告逐项一致、51..200连续loss及真实训练抽样/均值、父hash和base未变、最终生产loader差异。重复loss记录须诊断，不能静默去重或伪造完整更新序列。缺少最终结果时验收拒绝标为完成。
 
 用户已授权此扩展及上传代码、Notebook和小型诊断证据。每小时低频接手heartbeat `openvla-200`已由应用确认ACTIVE；Fast3R仍运行、GPU忙或状态无变化时静默，不重复启动。Fast3R结束且宿主GPU空闲后只启动此150次新增更新；有真实结果后补充本节、Notebook并推送现有PR #1，完成后删除heartbeat。定时接手需要电脑开机、应用运行和可用额度，不保证额度刷新瞬间接手。此前382次日志仍是未完成的全量评测（5成功、7任务汇总、final_success_rate=null），不因本轮有界证据改写。
+
+## 200步扩展：有界训练量诊断（2026-10-03）
+
+从已核验的 clean-task step 50 恢复原 AdamW 与 Torch RNG，新增150次更新至累计200。训练配置和8/2 episode划分不变。四个节点50/100/150/200的完整快照已保存，父teacher/AR预测在首次更新前逐帧一致，150条loss连续覆盖51–200；父snapshot及OXE base hash未变，partial为0。扩展PyTorch峰值allocated为8.761 GiB。
+
+独立CPU核验结果为 verified_clean_task_extension：四节点snapshot/spec/hash、真实帧身份、teacher targets、AR行指标、采样顺序、loss及base/父权重边界通过。完整结果原始JSON的状态仍是 completed_loader_difference_requires_diagnosis，不能改成生产loader全等PASS。
+
+| 更新后节点 | 训练24帧teacher准确率 | 训练24帧AR运动MAE | 验证246帧teacher准确率 | 验证teacher loss | 验证6帧AR运动MAE | 验证AR归一化L1 | 验证夹爪 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 50 | 32.14% | 0.132429 | 32.69% | 3.251718 | 0.132556 | 0.226822 | 6/6 |
+| 100 | 44.64% | 0.069782 | 33.97% | 3.397455 | 0.155038 | 0.328437 | 4/6 |
+| 150 | 50.60% | 0.066869 | 32.17% | 3.820993 | 0.131077 | 0.243615 | 6/6 |
+| 200 | 81.55% | 0.012485 | 28.98% | 4.857862 | 0.104561 | 0.171960 | 6/6 |
+
+训练24帧monitor明显拟合；两条validation episode的teacher准确率下降、loss增加。validation固定的6个AR阶段帧在step200的MAE/L1好于step50，但中间节点波动。该单任务单seed数据只能描述有限episode诊断，不能证明跨任务泛化或闭环成功率。
+
+step200实际production no-autocast与training BF16-autocast AR动作28/30行全等，train为22/24，validation为6/6。两处差异都在episode113且输入图像SHA相同：
+- timestep0动作维度0/3/4不同，最大绝对差0.343059；该帧teacher-forced路径第0 token分别31810和31868，target为31868。
+- timestep122只有动作维度5不同，差0.001956；teacher-forced token相同。
+
+报告没有保存这两行autoregressive生成token ID，因此可定位差异但不能证明具体原因。保留原始status差异；没有追加GPU推理、闭环或新的训练，也不推断是模型损坏。完整的约1.1MB结果/验收JSON留在本机；提交的紧凑摘要为 results/clean_task_extend_summary_v1.json。
+
+完整论文评测旧日志仍只有382次、5成功、7个任务汇总，final_success_rate为null；没有启动或补齐500次。该扩展没有simulator rollout。

@@ -1,22 +1,16 @@
-# OpenVLA 接手记录（2026-10-03）
+# OpenVLA 接手记录（2026-10-03 更新）
 
-## 当前接手状态：额度恢复，200步扩展等待Fast3R结束（12:13 CST核验）
+## 当前接手状态：200步扩展完成，独立完整性核验通过；production loader 动作差异仍待后续选择
 
-用户已明确授权继续并启动预定扩展训练，同时允许将代码、Notebook和小型诊断证据推送到`Yiran-yetuser/openvla`的`codex/complete-openvla-reproduction`并更新PR #1；不上传模型、HDF5/数据、视频、大日志或`test.jpg`。2026-10-03 12:08 CST额度查询ordinaryUsageAllowed=true（primary使用37%），权限已可查询宿主；未使用reset credit或付费API。先前额度/权限阻塞为历史，当前只因Fast3R仍运行而等待，不能继续把额度耗尽当作当前原因。
+用户更正：先前列出的 Fast3R PID 95939/95996 是无效残留，不代表仍有工作；复查时没有其他 Fast3R worker/锁或 GPU compute app 后，按既有授权启动本次唯一训练。没有终止任何 Fast3R 或其他项目进程，没有抢占其 GPU 任务。
 
-2026-10-03 12:13 CST宿主核验：`nvidia-smi`的compute-app列表为空，但`ps`仍显示Fast3R的`execute_paper_notebook_patch.py`（PID95939、95996）以及新的`prepare_co3d51_source_v1.py`（PID115598）运行中。可用磁盘约32GiB。记录`results/clean_task_extension_preflight_v1.json`是该时刻的观测，之后须重新查询。按照用户要求等Fast3R完成，本阶段没有启动OpenVLA训练，也没有终止其他进程。
+clean_task_extend_v1 从已核验的 clean_task_v1/step_050 分叉，恢复 optimizer/RNG，新增150次更新，累计200。worker 已正常退出。step50/100/150/200 四个完整 snapshot 均保存；第一次更新前父teacher/AR预测逐帧相同；base权重与父snapshot未变；150条loss严格连续覆盖51–200。训练结果 reproduction/results/clean_task_extend_v1.json 状态为 completed_loader_difference_requires_diagnosis。独立验收 reproduction/results/clean_task_extend_verification_v1.json 为 verified_clean_task_extension，验证四快照SHA/spec、原始帧身份/targets/指标、loss/抽样、父hash和base hash。完整原始JSON保留在本机；仓库中仅提交轻量审计摘要 reproduction/results/clean_task_extend_summary_v1.json。
 
-本轮已完成证据：4段既有task6失败视频共880帧已有限长度解码，按步号/帧数与trace对齐，保存各12帧contact sheet；有损MP4解码像素不用于认证策略原始RGB。原始LIBERO HDF5固定revision和SHA256已记录；10个选定RLDS episode与50个原始demo按完整float32动作序列唯一对应；从原始HDF5重放2个各自完整初始状态的专家轨迹均成功（2/2），没有加载OpenVLA或优化器更新。专家成功不作为策略成功率。
+训练24帧monitor的teacher accuracy从32.14%升至81.55%，AR motion MAE从0.132429降至0.012485。两条episode、246帧validation的teacher accuracy从32.69%降至28.98%，teacher loss从3.251718升至4.857862；六个固定validation AR阶段帧在step200的motion MAE/L1为0.104561/0.171960，step50为0.132556/0.226822，中间节点有波动。这个单任务单seed诊断不证明跨任务泛化或闭环成功。
 
-唯一允许的GPU阶段：`reproduction/extend_clean_task.py`从`runs/clean_task_v1/step_050`不可变分叉，父snapshot还必须与既有`clean_task_verification_v1.json`以及原最终报告SHA吻合。恢复保存的AdamW/RNG，在同8/2 episode隔离、NF4/BF16/doubleFalse、rank32/alpha16、lr1e-4、seed7、无增强/裁剪下累计至200更新（新增150），节点50/100/150/200。所有父teacher/AR逐帧预测须在更新前匹配。宿主ps确认全部Fast3R项目worker/锁退出、GPU无计算任务且至少10GiB可用后，可运行同离线环境下`python reproduction/extend_clean_task.py --launch`。现无progress/result；不重训旧50步、不跑闭环或500。
+最终production no-autocast对照与训练BF16-autocast动作28/30行全等：train 22/24、validation 6/6。两个不同帧均在episode113：timestep0动作最大差0.343059，teacher-forced预测在第0 token不同且生产token与target相同；timestep122只在动作维度5相差0.001956，teacher-forced token相同。报告未保存自回归生成token ID，故具体分歧机制未定。该loader parity结果仍失败，不称推理全等，也不追加训练掩盖差异。
 
-本轮66项CPU测试通过；旧GPU实测脚本有导入即加载模型/执行CUDA副作用，已显式排除，不在等待期间运行。`verify_clean_task_extend.py`会CPU重载真实帧，重算每节点teacher目标/AR指标，检查snapshot与报告一致、父预测、51..200抽样与平均loss、生产loader动作差异和base未变；重复loss不能被默默丢弃，须保留并诊断。扩展结果缺失时验收器拒绝伪造完成。检查点resume未端到端验证，不承诺位级连续等价。
-
-应用已确认创建并启用每小时接手heartbeat `openvla-200`，在本聊天等Fast3R结束后再启动上述唯一实验；额度不可用留给后续运行，不用重置权益。worker健康/忙/等待/状态无变化静默；完成、失败、实质新证据或必要用户选择才通知。训练与CPU核验完成后更新第40节/DIAGNOSIS、提交推送同分支并更新PR #1，然后删除这个heartbeat。原权重、数据、checkpoint、日志、视频和用户test.jpg保留。
-
-本轮代码与专家/视频诊断证据已提交并推送：`99fdb10`，远程branch和PR #1 head已核对一致，PR描述已更新。收尾66项显式CPU测试、44个Python AST、75-cell Notebook schema/全部code AST及第37–40节4个reader实际stdout/存储输出核验通过；已有视频/专家证据只读重验通过，没有重新仿真。12:24 CST的宿主复核仍是上述3个Fast3R worker活跃，GPU compute-app为空，扩展仍未启动；当前唯一未跟踪文件为用户`test.jpg`，未上传。后续接手以实时状态为准。
-
-旧线程goal仍要求完成500次全量评测，但连续3次goal接手均确认：该评测没有宿主进程，原日志SHA保持`3962f67b0fb67936090e3b969dc61494693008dd7e5e51577bd3eb19b188038b`，仅382次/7个任务汇总，最终成功率仍为null。用户后续要求停止旧评测并先诊断，当前GPU授权仅为上述200步扩展，不能从旧goal自动扩大至500次。这个旧goal因需要用户重新确认全量评测授权而进入blocked，不是完成，也不是自行暂停；保留其原始500次目标。`openvla-200`每小时接手仍ACTIVE，不受旧goal阻塞影响。第三次核验时PID115598已不在宿主列表，但Fast3R PID95939/95996仍活跃；仍须等全部worker/锁退出，不将局部进程消失当作整个项目完成。
+本阶段无simulator rollout或500-rollout评测。旧全量日志仍为382次、5成功、7个任务汇总、final_success_rate=null；旧500目标仍阻塞，不能自动重启。原始base、数据/HDF5、checkpoint、日志、视频和用户test.jpg均不上传。下一步若要排查loader根因、扩展训练或运行模拟器，须先由用户选择明确的新范围。
 
 ## 当前阶段完成：正式推理入口与4次有界闭环对照
 
