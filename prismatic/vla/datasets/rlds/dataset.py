@@ -7,6 +7,7 @@ Core interface script for configuring and initializing RLDS datasets.
 import copy
 import inspect
 import json
+import os
 from functools import partial
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -231,8 +232,19 @@ def make_dataset_from_rlds(
         dataset_statistics["action"]["mask"] = np.array(action_normalization_mask)
 
     # construct the dataset
+    train_episode_limit = os.environ.get("OPENVLA_TRAIN_EPISODES")
+    eval_episode_start = os.environ.get("OPENVLA_EVAL_EPISODE_START", "12")
+    eval_episode_count = os.environ.get("OPENVLA_EVAL_EPISODES", "4")
+
     if "val" not in builder.info.splits:
-        split = "train[:95%]" if train else "train[95%:]"
+        if train and train_episode_limit:
+            split = f"train[:{int(train_episode_limit)}]"
+        elif not train and eval_episode_count:
+            eval_start = int(eval_episode_start)
+            eval_end = eval_start + int(eval_episode_count)
+            split = f"train[{eval_start}:{eval_end}]"
+        else:
+            split = "train[:95%]" if train else "train[95%:]"
     else:
         split = "train" if train else "val"
 

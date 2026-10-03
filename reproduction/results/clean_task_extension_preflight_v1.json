@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "status": "deferred_fast3r_active",
+  "checked_at": "2026-10-03T12:13:33+08:00",
+  "experiment": "clean_task_extend_v1",
+  "ordinary_usage_allowed": true,
+  "gpu_compute_processes": [],
+  "active_fast3r_processes": [
+    {
+      "pid": 95939,
+      "command": "/home/yyz/miniconda3/envs/fast3r/bin/python scripts/execute_paper_notebook_patch.py --cell-id paper-co3d-51-budget"
+    },
+    {
+      "pid": 95996,
+      "command": "/home/yyz/miniconda3/envs/fast3r/bin/python scripts/execute_paper_notebook_patch.py --cell-id paper-co3d-51-budget"
+    },
+    {
+      "pid": 115598,
+      "command": "/home/yyz/miniconda3/envs/fast3r/bin/python -u scripts/prepare_co3d51_source_v1.py"
+    }
+  ],
+  "training_launched": false,
+  "optimizer_updates_in_this_check": 0,
+  "limits": [
+    "Host process/GPU observation at the recorded time; future runs must query live state.",
+    "An empty compute-app list does not establish completion of the Fast3R project.",
+    "No extension training metrics or model performance claims are produced by this preflight."
+  ]
+}

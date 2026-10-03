@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "status": "pass",
+  "scope": "Read-only CPU verification after small_fit_v1 completed; no new GPU computation",
+  "result_sha256": "33c9e5bc11dc04295adeda004e22eb291769ad9e8cdce4be5748357f154b1f36",
+  "checks": {
+    "result_spec_equals_run_spec": "pass",
+    "completed_50_updates": "pass",
+    "all_report_and_loss_values_finite": "pass",
+    "all_24_frame_identities_equal_cpu_audit_at_all_evaluations": "pass",
+    "raw_targets_equal_cpu_audit_normalized_targets": "pass",
+    "all_autoregressive_metrics_recomputed_from_actions": "pass",
+    "all_split_summaries_recomputed_from_rows": "pass",
+    "snapshot_spec_and_protected_file_sha256_at_0_10_25_50": "pass",
+    "snapshot_evaluations_equal_final_report": "pass",
+    "source_adapter_config_stats_sha256_unchanged": "pass",
+    "training_and_production_24_autoregressive_actions_equal": "pass",
+    "50_ordered_loss_records_with_8_microbatches_each": "pass"
+  },
+  "mean_training_loss_before_update": {
+    "1": 2.819471597671509,
+    "10": 0.283406401053071,
+    "25": 0.00028007770470139803,
+    "50": 2.105845132405193e-05
+  },
+  "probe_teacher_token_l1_at_step50": {
+    "training_BF16_autocast": 0.12759103641456582,
+    "production_no_autocast": 0.12492997198879552
+  },
+  "limits": [
+    "Training loss is measured before the named update; milestone action evaluation is after the update",
+    "Loss at step0 was not separately measured; update1 loss is not relabeled as step0 loss",
+    "Exact autoregressive actions do not imply identical teacher-forced logits or all decoded tokens",
+    "Snapshot integrity was verified; interrupted GPU resume was not exercised",
+    "No held-out generalization or simulator success-rate claim"
+  ]
+}

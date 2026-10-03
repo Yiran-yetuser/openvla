@@ -1,0 +1,275 @@
+{
+  "schema_version": 1,
+  "status": "verified_comparison",
+  "only_spec_difference": "learning_rate",
+  "step0_exactly_equal": true,
+  "reports_sha256": {
+    "lr1e-4": "33c9e5bc11dc04295adeda004e22eb291769ad9e8cdce4be5748357f154b1f36",
+    "lr5e-4": "9782e06ea355b32c98968e940d1d2d0182fd97003714854dfbbd1c3cf826dc92"
+  },
+  "local_snapshot_verification": true,
+  "milestones": [
+    {
+      "step": 0,
+      "lr1e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.3839285714285714,
+          "teacher_token_l1": 0.14593837535014006,
+          "autoregressive_motion_mae": 0.11270311026229714,
+          "autoregressive_normalized_l1": 0.21429853684243833,
+          "gripper_correct": 15,
+          "small_translation_count": 9
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11218487394957984,
+          "autoregressive_motion_mae": 0.10004491293099038,
+          "autoregressive_normalized_l1": 0.1661974397850028,
+          "gripper_correct": 8,
+          "small_translation_count": 6
+        }
+      },
+      "lr5e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.3839285714285714,
+          "teacher_token_l1": 0.14593837535014006,
+          "autoregressive_motion_mae": 0.11270311026229714,
+          "autoregressive_normalized_l1": 0.21429853684243833,
+          "gripper_correct": 15,
+          "small_translation_count": 9
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11218487394957984,
+          "autoregressive_motion_mae": 0.10004491293099038,
+          "autoregressive_normalized_l1": 0.1661974397850028,
+          "gripper_correct": 8,
+          "small_translation_count": 6
+        }
+      }
+    },
+    {
+      "step": 10,
+      "lr1e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.9732142857142858,
+          "teacher_token_l1": 0.002240896358543418,
+          "autoregressive_motion_mae": 0.005096859865909591,
+          "autoregressive_normalized_l1": 0.006505965335235883,
+          "gripper_correct": 16,
+          "small_translation_count": 1
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11134453781512606,
+          "autoregressive_motion_mae": 0.0921449432800466,
+          "autoregressive_normalized_l1": 0.16285216047161954,
+          "gripper_correct": 8,
+          "small_translation_count": 5
+        }
+      },
+      "lr5e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3392857142857143,
+          "teacher_token_l1": 0.123109243697479,
+          "autoregressive_motion_mae": 0.07039658622995013,
+          "autoregressive_normalized_l1": 0.15287163065735648,
+          "gripper_correct": 8,
+          "small_translation_count": 0
+        }
+      }
+    },
+    {
+      "step": 25,
+      "lr1e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.12002801120448178,
+          "autoregressive_motion_mae": 0.0870867129498971,
+          "autoregressive_normalized_l1": 0.1702752506767228,
+          "gripper_correct": 7,
+          "small_translation_count": 3
+        }
+      },
+      "lr5e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.2857142857142857,
+          "teacher_token_l1": 0.1323529411764706,
+          "autoregressive_motion_mae": 0.08409226597944926,
+          "autoregressive_normalized_l1": 0.20218177355847378,
+          "gripper_correct": 8,
+          "small_translation_count": 0
+        }
+      }
+    },
+    {
+      "step": 50,
+      "lr1e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.12759103641456582,
+          "autoregressive_motion_mae": 0.09190694866625873,
+          "autoregressive_normalized_l1": 0.17731562748147808,
+          "gripper_correct": 7,
+          "small_translation_count": 3
+        }
+      },
+      "lr5e-4": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.2857142857142857,
+          "teacher_token_l1": 0.12366946778711485,
+          "autoregressive_motion_mae": 0.07881063105788819,
+          "autoregressive_normalized_l1": 0.18847578518063107,
+          "gripper_correct": 8,
+          "small_translation_count": 0
+        }
+      }
+    }
+  ],
+  "production": {
+    "lr1e-4": {
+      "actions_equal_training": true,
+      "summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.12492997198879552,
+          "autoregressive_motion_mae": 0.09190694866625873,
+          "autoregressive_normalized_l1": 0.17731562748147808,
+          "gripper_correct": 7,
+          "small_translation_count": 3
+        }
+      }
+    },
+    "lr5e-4": {
+      "actions_equal_training": true,
+      "summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.2857142857142857,
+          "teacher_token_l1": 0.12450980392156863,
+          "autoregressive_motion_mae": 0.07881063105788819,
+          "autoregressive_normalized_l1": 0.18847578518063107,
+          "gripper_correct": 8,
+          "small_translation_count": 0
+        }
+      }
+    }
+  },
+  "limits": [
+    "fixed-frame fitting, not held-out generalization or rollout success",
+    "one seed and one run per learning rate, not an uncertainty estimate",
+    "cannot uniquely explain historical training failure",
+    "pre-update loss and post-update action metrics have different timing"
+  ],
+  "local_checks": {
+    "lr1e-4": {
+      "snapshot_and_source_hashes": "pass",
+      "loss_attempts": [
+        {
+          "path": "/home/yyz/openvla/runs/small_fit_v1/attempt-1790877080085756109-losses.jsonl",
+          "sha256": "011bc7bccb3102322252f14b8e239c5fee3e1e1f72cc8e341158086bc5ab277c",
+          "records": 50
+        }
+      ],
+      "loss_record_selection": "latest attempt per update; prior attempts retained",
+      "mean_loss_before_update": {
+        "1": 2.819471597671509,
+        "10": 0.283406401053071,
+        "25": 0.00028007770470139803,
+        "50": 2.105845132405193e-05
+      }
+    },
+    "lr5e-4": {
+      "snapshot_and_source_hashes": "pass",
+      "loss_attempts": [
+        {
+          "path": "/home/yyz/openvla/runs/small_fit_lr5e4_v1/attempt-1790909329524761321-losses.jsonl",
+          "sha256": "911cc28c6871aade73139b8d7a76c799b9a1f67e7132a1f23b1142d63ee7e938",
+          "records": 50
+        }
+      ],
+      "loss_record_selection": "latest attempt per update; prior attempts retained",
+      "mean_loss_before_update": {
+        "1": 2.819471597671509,
+        "10": 4.895315987596405e-05,
+        "25": 6.227436998074154e-06,
+        "50": 4.5075944132833e-07
+      }
+    }
+  }
+}

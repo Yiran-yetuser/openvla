@@ -1,0 +1,504 @@
+{
+  "status": "bounded_reload_diagnosis_complete",
+  "spec": {
+    "experiment": "clean_task_v1",
+    "audit_sha256": "ac28212331930ba991eabfb462f12558cc122e33d05d0145c8ac1fbcf906d41a",
+    "base_path": "/home/yyz/.cache/huggingface/hub/models--openvla--openvla-7b/snapshots/47a0ec7fc4ec123775a391911046cf33cf9ed83f",
+    "base_revision": "47a0ec7fc4ec123775a391911046cf33cf9ed83f",
+    "initialization": "fresh LoRA on OXE pretrained base; no historical adapter",
+    "optimizer_updates": 50,
+    "learning_rate": 0.0001,
+    "rank": 32,
+    "lora_alpha": 16,
+    "lora_dropout": 0.0,
+    "targets": "all-linear",
+    "seed": 7,
+    "microbatch": 2,
+    "accumulation": 8,
+    "nf4": true,
+    "compute_dtype": "bfloat16",
+    "double_quant": false,
+    "augmentation": false,
+    "center_crop": false,
+    "milestones": [
+      0,
+      10,
+      25,
+      50
+    ],
+    "train_episodes": [
+      185,
+      343,
+      79,
+      110,
+      72,
+      400,
+      75,
+      113
+    ],
+    "validation_episodes": [
+      394,
+      212
+    ],
+    "training_frames": 992,
+    "validation_frames": 246,
+    "sampling": "seeded shuffled training epochs; 16 frames per update",
+    "validation_teacher": "all eligible validation frames",
+    "autoregressive": "three fixed stage frames per episode; not full-frame or simulator evaluation"
+  },
+  "snapshot_sha256": {
+    "adapter_model.safetensors": "d419ec119bfac0dacc301d55950d0c97bd1a6f84e9ae6cf336c5fb35c1a04c54",
+    "adapter_config.json": "fb580fac4fdc287e3f78aa65bb6000e2ee31364b6c2a303ebc7453e519ba20a9",
+    "dataset_statistics.json": "45d1b4f0b28a87bce60f5c2f4f5c22978a00668e77723da06eaea7ecd319c022",
+    "optimizer_rng.pt": "7759416d6a8793060fe20f55cbed3fc7de6d8e55864185d34731e16ddc804002",
+    "evaluation.json": "9abea19982ff9d49feeb3d34f955384123ad65f323ec2bc446cadd20b1acbbd8"
+  },
+  "final_report_sha256": "6f50c115f7d0e01aff5d36dfe4c8bd984615348f8395c1aae9dffa20876dd25a",
+  "frames": [
+    {
+      "split": "train",
+      "episode_index": 185,
+      "timestep": 104,
+      "image_sha256": "8351b6c5b0494356e659892143f848f7d679b8858d4ccaab33e58bf90be5b82c"
+    },
+    {
+      "split": "train",
+      "episode_index": 79,
+      "timestep": 0,
+      "image_sha256": "357318bbd66f6e66658e1dcc1a9ca622da59a58675439835aa7e7673d461296b"
+    },
+    {
+      "split": "train",
+      "episode_index": 72,
+      "timestep": 0,
+      "image_sha256": "abb37faebe6ecc5192706fb7561001baea37224da9f5846d19bb7f78f7a8f528"
+    },
+    {
+      "split": "validation",
+      "episode_index": 394,
+      "timestep": 0,
+      "image_sha256": "a60147f6490855ba7ca55b915a19d93dad829803636b2155c8729fed2131d80d"
+    },
+    {
+      "split": "validation",
+      "episode_index": 394,
+      "timestep": 61,
+      "image_sha256": "c1923e4dc64a4225f8c01c012a540df552f04e43ed05e5467007665807d09816"
+    },
+    {
+      "split": "validation",
+      "episode_index": 394,
+      "timestep": 122,
+      "image_sha256": "65c1a6fe89071f1289e6504bdcbb82c769325a8d3b5c94fd9e07f0bfc9e3d3fe"
+    }
+  ],
+  "recorded_training_actions": [
+    [
+      2.4652165524496894e-06,
+      0.0015165358489634961,
+      0.3683612459103265,
+      0.00045178592599497136,
+      0.025688930254356646,
+      -0.05845205820030429,
+      0.996078431372549
+    ],
+    [
+      0.9345425945274969,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      -0.03993392898010853,
+      -0.06169678534245948,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      0.9345425945274969,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      -0.03993392898010853,
+      -0.0005267844246881759,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      0.9345425945274969,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      -0.03993392898010853,
+      -0.0005267844246881759,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      2.4652165524496894e-06,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      0.00045178592599497136,
+      0.025688930254356646,
+      -0.05845205820030429,
+      0.0
+    ],
+    [
+      2.4652165524496894e-06,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      0.00045178592599497136,
+      0.1261825031906953,
+      -0.05845205820030429,
+      0.996078431372549
+    ]
+  ],
+  "recorded_production_actions": [
+    [
+      -0.08871969895853721,
+      0.0015165358489634961,
+      -0.7397391593058904,
+      0.00045178592599497136,
+      -0.12577964344679135,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      0.9345425945274969,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      -0.03993392898010853,
+      -0.0005267844246881759,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      0.9345425945274969,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      -0.03993392898010853,
+      -0.06169678534245948,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      0.9345425945274969,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      -0.03993392898010853,
+      -0.0005267844246881759,
+      0.0002168503291176127,
+      0.996078431372549
+    ],
+    [
+      2.4652165524496894e-06,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      0.00045178592599497136,
+      0.025688930254356646,
+      -0.05845205820030429,
+      0.0
+    ],
+    [
+      2.4652165524496894e-06,
+      0.0015165358489634961,
+      -0.0420463115771611,
+      0.00045178592599497136,
+      0.1261825031906953,
+      -0.05845205820030429,
+      0.996078431372549
+    ]
+  ],
+  "paths": {
+    "prepared_reload_BF16_autocast": {
+      "signature": {
+        "model_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.modeling_prismatic.OpenVLAForActionPrediction'>",
+        "config_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.configuration_prismatic.OpenVLAConfig'>",
+        "parameter_dtype_counts": {
+          "vision:torch.float32:Parameter": 31323840,
+          "vision:torch.uint8:Params4bit": 364142592,
+          "other:torch.uint8:Params4bit": 3273687040,
+          "other:torch.float32:Parameter": 345082368
+        },
+        "gradient_checkpointing": true,
+        "config_use_cache": null
+      },
+      "actions": [
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          0.3683612459103265,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.06169678534245948,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.0
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.1261825031906953,
+          -0.05845205820030429,
+          0.996078431372549
+        ]
+      ]
+    },
+    "production_reload_no_autocast": {
+      "signature": {
+        "model_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.modeling_prismatic.OpenVLAForActionPrediction'>",
+        "config_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.configuration_prismatic.OpenVLAConfig'>",
+        "parameter_dtype_counts": {
+          "vision:torch.bfloat16:Parameter": 2733760,
+          "vision:torch.uint8:Params4bit": 364142592,
+          "vision:torch.float32:Parameter": 28590080,
+          "other:torch.uint8:Params4bit": 3273687040,
+          "other:torch.bfloat16:Parameter": 264108544,
+          "other:torch.float32:Parameter": 80973824
+        },
+        "gradient_checkpointing": false,
+        "config_use_cache": null
+      },
+      "actions": [
+        [
+          -0.08871969895853721,
+          0.0015165358489634961,
+          -0.7397391593058904,
+          0.00045178592599497136,
+          -0.12577964344679135,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.06169678534245948,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.0
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.1261825031906953,
+          -0.05845205820030429,
+          0.996078431372549
+        ]
+      ]
+    },
+    "same_production_instance_BF16_autocast": {
+      "signature": {
+        "model_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.modeling_prismatic.OpenVLAForActionPrediction'>",
+        "config_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.configuration_prismatic.OpenVLAConfig'>",
+        "parameter_dtype_counts": {
+          "vision:torch.bfloat16:Parameter": 2733760,
+          "vision:torch.uint8:Params4bit": 364142592,
+          "vision:torch.float32:Parameter": 28590080,
+          "other:torch.uint8:Params4bit": 3273687040,
+          "other:torch.bfloat16:Parameter": 264108544,
+          "other:torch.float32:Parameter": 80973824
+        },
+        "gradient_checkpointing": false,
+        "config_use_cache": null
+      },
+      "actions": [
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          0.3683612459103265,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.06169678534245948,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.06169678534245948,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.0
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.1261825031906953,
+          -0.05845205820030429,
+          0.996078431372549
+        ]
+      ]
+    },
+    "same_production_instance_prepared_BF16_autocast": {
+      "signature": {
+        "model_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.modeling_prismatic.OpenVLAForActionPrediction'>",
+        "config_class": "<class 'transformers_modules.47a0ec7fc4ec123775a391911046cf33cf9ed83f.configuration_prismatic.OpenVLAConfig'>",
+        "parameter_dtype_counts": {
+          "vision:torch.float32:Parameter": 31323840,
+          "vision:torch.uint8:Params4bit": 364142592,
+          "other:torch.uint8:Params4bit": 3273687040,
+          "other:torch.float32:Parameter": 345082368
+        },
+        "gradient_checkpointing": true,
+        "config_use_cache": null
+      },
+      "actions": [
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          0.3683612459103265,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.06169678534245948,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          0.9345425945274969,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          -0.03993392898010853,
+          -0.0005267844246881759,
+          0.0002168503291176127,
+          0.996078431372549
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.025688930254356646,
+          -0.05845205820030429,
+          0.0
+        ],
+        [
+          2.4652165524496894e-06,
+          0.0015165358489634961,
+          -0.0420463115771611,
+          0.00045178592599497136,
+          0.1261825031906953,
+          -0.05845205820030429,
+          0.996078431372549
+        ]
+      ]
+    }
+  },
+  "prepared_reload_matches_recorded_training": true,
+  "production_reload_matches_recorded_production": true,
+  "production_autocast_matches_training": false,
+  "production_prepared_autocast_matches_training": true,
+  "optimizer_updates": 0,
+  "checkpoint_modified": false,
+  "limits": [
+    "Six selected frames only; no claim about all inputs or closed-loop behavior.",
+    "Preparation changes nonquantized dtypes and checkpointing together, not a dtype-only causal ablation.",
+    "No production implementation changed; original mismatch evidence retained."
+  ]
+}

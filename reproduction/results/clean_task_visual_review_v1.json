@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "status": "manual_keyframe_review_not_contact_ground_truth",
+  "source_video_audit": "reproduction/results/clean_task_video_audit_v1.json",
+  "source_task_definition": "/home/yyz/LIBERO/libero/libero/bddl_files/libero_spatial/pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate.bddl",
+  "target_object": "akita_black_bowl_1",
+  "goal": "On akita_black_bowl_1 plate_1",
+  "review_scope": "12 sampled pre-action images per existing video, 48 images total; all 880 frames decoded but not all manually classified",
+  "entries": [
+    {"path": "default", "trial": 0, "first_close_command_step": 42, "command_switches": 3, "supporting_keyframes": [40, 60, 80, 100, 150, 180, 219], "visual_observation": "The target-looking bowl moves with the gripper toward and past the plate edge. The sampled late frames show it outside the plate while the gripper remains mostly closed.", "inferred_failure_stage": "transport/placement after apparent pickup", "physical_grasp_verified": false},
+    {"path": "compatible", "trial": 0, "first_close_command_step": 41, "command_switches": 9, "supporting_keyframes": [40, 60, 80, 100, 150, 180, 219], "visual_observation": "The bowl moves with the gripper toward the plate but is not visibly deposited on it in sampled late frames. A sustained successful release is not visible.", "inferred_failure_stage": "transport/placement after apparent pickup", "physical_grasp_verified": false},
+    {"path": "default", "trial": 1, "first_close_command_step": 42, "command_switches": 30, "supporting_keyframes": [40, 60, 80, 100, 120, 150, 200, 219], "visual_observation": "The gripper remains near the bowl/cookie area. The sampled sequence does not show stable lifted transport to the plate; late commands repeatedly open and close.", "inferred_failure_stage": "grasp acquisition or grasp stability", "physical_grasp_verified": false},
+    {"path": "compatible", "trial": 1, "first_close_command_step": 36, "command_switches": 30, "supporting_keyframes": [40, 60, 80, 100, 120, 150, 200, 219], "visual_observation": "The gripper stays near the original bowl/cookie area with no clear stable lifted transport in sampled frames, followed by repeated opening/closing.", "inferred_failure_stage": "grasp acquisition or grasp stability", "physical_grasp_verified": false}
+  ],
+  "limits": [
+    "Stage labels are visual interpretations, not unique causal diagnoses.",
+    "Finger joint closure does not prove successful grasp or contact.",
+    "Policy videos omit the final post-action frame; trace/log success=False supplies the final task outcome.",
+    "Do not infer quantization failure, training sufficiency, or a model success rate from these annotations."
+  ]
+}

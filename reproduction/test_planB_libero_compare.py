@@ -25,13 +25,13 @@ REPO_DIR = Path(__file__).resolve().parent.parent
 IMAGE_PATH = REPO_DIR / "test_image.jpg"
 
 ADAPTER_PATH = (
-    REPO_DIR / "adapter-tmp/libero_spatial_1000step/"
+    REPO_DIR / "adapter-tmp/libero_spatial_12episode_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug"
 )
 
 STATS_PATH = (
-    REPO_DIR / "runs/libero_spatial_1000step/"
+    REPO_DIR / "runs/libero_spatial_12episode_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug/"
     "dataset_statistics.json"
@@ -212,7 +212,8 @@ def predict_action_libero(
     # --------------------------------------------------------
 
     generated_ids = model.generate(
-        input_ids,
+        input_ids=input_ids,
+        pixel_values=inputs["pixel_values"],
         max_new_tokens=action_dim,
         do_sample=False,
     )

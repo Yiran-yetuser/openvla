@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "status": "verified_existing_failure_diagnosis_evidence",
+  "video_audit_sha256": "2f365fc4bc4d50fb8a30c7916b2d05ede91a4c19440858b7c4300d49ca4a12f9",
+  "expert_replay_sha256": "b6e0471cb57f7dd547592629020e859907cb941d94e3da0309d799e98bc5924a",
+  "decoded_frames_verified": 880,
+  "video_rows": [
+    {
+      "path": "default",
+      "trial": 0,
+      "frames": 220,
+      "command_switches": 3
+    },
+    {
+      "path": "default",
+      "trial": 1,
+      "frames": 220,
+      "command_switches": 30
+    },
+    {
+      "path": "compatible",
+      "trial": 0,
+      "frames": 220,
+      "command_switches": 9
+    },
+    {
+      "path": "compatible",
+      "trial": 1,
+      "frames": 220,
+      "command_switches": 30
+    }
+  ],
+  "original_expert_actions_verified": 230,
+  "expert_rows": [
+    {
+      "episode_index": 185,
+      "demo_name": "demo_15",
+      "action_count": 106,
+      "success_at_end": true,
+      "first_goal_after_action_step": 89
+    },
+    {
+      "episode_index": 394,
+      "demo_name": "demo_22",
+      "action_count": 124,
+      "success_at_end": true,
+      "first_goal_after_action_step": 113
+    }
+  ],
+  "expert_successes": 2,
+  "new_rollouts": 0,
+  "optimizer_updates": 0,
+  "limits": [
+    "This verifier checks recorded simulator outcomes and source identity; it does not rerun physics.",
+    "Manual visual stage annotations are interpretation, not contact-state ground truth.",
+    "Expert replay successes are not OpenVLA policy successes or matched-state performance comparisons."
+  ]
+}

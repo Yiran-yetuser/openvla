@@ -18,10 +18,12 @@ Usage:
 """
 
 import os
+import json
+import hashlib
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import draccus
 import numpy as np
@@ -60,8 +62,11 @@ class GenerateConfig:
     #################################################################################################################
     model_family: str = "openvla"                    # Model family
     pretrained_checkpoint: Union[str, Path] = ""     # Pretrained checkpoint path
+    base_model_path: str = "openvla/openvla-7b"      # LoRA adapter 对应的 base 模型路径
     load_in_8bit: bool = False                       # (For OpenVLA only) Load with 8-bit quantization
     load_in_4bit: bool = False                       # (For OpenVLA only) Load with 4-bit quantization
+    bnb_double_quant: bool = True                    # Explicitly match the training recipe for diagnostics
+    prepare_for_kbit_inference: bool = False         # Opt-in: match PEFT k-bit training preparation
 
     center_crop: bool = True                         # Center crop? (if trained w/ random crop image aug)
 
@@ -71,6 +76,9 @@ class GenerateConfig:
     task_suite_name: str = "libero_spatial"          # Task suite. Options: libero_spatial, libero_object, libero_goal, libero_10, libero_90
     num_steps_wait: int = 10                         # Number of steps to wait for objects to stabilize in sim
     num_trials_per_task: int = 50                    # Number of rollouts per task
+    task_ids: Optional[List[int]] = None             # Bounded diagnostic subset; None = full suite
+    trace_actions: bool = False                     # JSON action + robot state traces for failure diagnosis
+    fail_fast: bool = False                         # Diagnostic mode: propagate errors, don't call them policy failures
 
     #################################################################################################################
     # Utils
@@ -93,6 +101,24 @@ def eval_libero(cfg: GenerateConfig) -> None:
     if "image_aug" in cfg.pretrained_checkpoint:
         assert cfg.center_crop, "Expecting `center_crop==True` because model was trained with image augmentations!"
     assert not (cfg.load_in_8bit and cfg.load_in_4bit), "Cannot use both 8-bit and 4-bit quantization!"
+    if cfg.prepare_for_kbit_inference:
+        assert cfg.model_family == "openvla" and cfg.load_in_4bit, \
+            "prepare_for_kbit_inference requires an OpenVLA 4-bit LoRA checkpoint"
+
+    # 新增：把文件描述符软上限提到硬上限。
+    # 原因：LIBERO 评测每个 episode 都会写 MP4（imageio 起 ffmpeg 子进程）、每步都创建离屏渲染上下文，
+    #      长时间评测会累积文件描述符。若通过 setsid/systemd-inhibit 之类的方式后台启动，
+    #      软上限往往只有 1024，跑到第 17 个 episode 左右就会抛
+    #      `OSError: [Errno 24] Too many open files`。
+    try:
+        import resource
+
+        soft_limit, hard_limit = resource.getrlimit(resource.RLIMIT_NOFILE)
+        if soft_limit < hard_limit:
+            resource.setrlimit(resource.RLIMIT_NOFILE, (hard_limit, hard_limit))
+            print(f"[*] Raised RLIMIT_NOFILE from {soft_limit} to {hard_limit}")
+    except Exception as error:  # pragma: no cover - 仅用于提示，不影响评测
+        print(f"[*] Could not raise RLIMIT_NOFILE: {error}")
 
     # Set random seed
     set_seed_everywhere(cfg.seed)
@@ -137,6 +163,11 @@ def eval_libero(cfg: GenerateConfig) -> None:
     benchmark_dict = benchmark.get_benchmark_dict()
     task_suite = benchmark_dict[cfg.task_suite_name]()
     num_tasks_in_suite = task_suite.n_tasks
+    selected_tasks = list(range(num_tasks_in_suite)) if cfg.task_ids is None else cfg.task_ids
+    assert selected_tasks and len(set(selected_tasks)) == len(selected_tasks)
+    assert all(0 <= task_id < num_tasks_in_suite for task_id in selected_tasks)
+    log_file.write(f"Selected task IDs: {selected_tasks}; trials per task: {cfg.num_trials_per_task}\n")
+    log_file.write(f"prepare_for_kbit_inference: {cfg.prepare_for_kbit_inference}\n")
     print(f"Task suite: {cfg.task_suite_name}")
     log_file.write(f"Task suite: {cfg.task_suite_name}\n")
 
@@ -145,7 +176,7 @@ def eval_libero(cfg: GenerateConfig) -> None:
 
     # Start evaluation
     total_episodes, total_successes = 0, 0
-    for task_id in tqdm.tqdm(range(num_tasks_in_suite)):
+    for task_id in tqdm.tqdm(selected_tasks):
         # Get task
         task = task_suite.get_task(task_id)
 
@@ -165,10 +196,14 @@ def eval_libero(cfg: GenerateConfig) -> None:
             env.reset()
 
             # Set initial states
-            obs = env.set_init_state(initial_states[episode_idx])
+            init_state = np.asarray(initial_states[episode_idx])
+            obs = env.set_init_state(init_state)
 
             # Setup
             t = 0
+            done = False
+            episode_error = None
+            action_trace = []
             replay_images = []
             if cfg.task_suite_name == "libero_spatial":
                 max_steps = 220  # longest training demo has 193 steps
@@ -215,6 +250,8 @@ def eval_libero(cfg: GenerateConfig) -> None:
                         task_description,
                         processor=processor,
                     )
+                    if cfg.trace_actions:
+                        policy_action = action.copy()
 
                     # Normalize gripper action [0,1] -> [-1,+1] because the environment expects the latter
                     action = normalize_gripper_action(action, binarize=True)
@@ -223,6 +260,14 @@ def eval_libero(cfg: GenerateConfig) -> None:
                     # (0 = close, 1 = open), so flip it back (-1 = open, +1 = close) before executing the action
                     if cfg.model_family == "openvla":
                         action = invert_gripper_action(action)
+
+                    if cfg.trace_actions:
+                        action_trace.append({"step": t - cfg.num_steps_wait,
+                                             "image_sha256": hashlib.sha256(np.asarray(img).tobytes()).hexdigest(),
+                                             "policy_action": policy_action.tolist(),
+                                             "simulator_action": action.tolist(),
+                                             "eef_pos": obs["robot0_eef_pos"].tolist(),
+                                             "gripper_qpos": obs["robot0_gripper_qpos"].tolist()})
 
                     # Execute action in environment
                     obs, reward, done, info = env.step(action.tolist())
@@ -233,12 +278,30 @@ def eval_libero(cfg: GenerateConfig) -> None:
                     t += 1
 
                 except Exception as e:
+                    episode_error = repr(e)
                     print(f"Caught exception: {e}")
                     log_file.write(f"Caught exception: {e}\n")
+                    if cfg.fail_fast:
+                        env.close()
+                        log_file.flush()
+                        log_file.close()
+                        raise
                     break
 
             task_episodes += 1
             total_episodes += 1
+            if cfg.trace_actions:
+                trace_path = Path(cfg.local_log_dir) / f"{run_id}--task{task_id}-trial{episode_idx}.json"
+                with trace_path.open("x") as handle:
+                    json.dump({"task_id": task_id, "instruction": task_description,
+                               "trial": episode_idx, "success": bool(done), "error": episode_error,
+                               "init_state_sha256": hashlib.sha256(init_state.tobytes()).hexdigest(),
+                               "init_state_shape": list(init_state.shape), "init_state_dtype": str(init_state.dtype),
+                               "checkpoint": str(cfg.pretrained_checkpoint), "seed": cfg.seed,
+                               "center_crop": cfg.center_crop, "double_quant": cfg.bnb_double_quant,
+                               "prepare_for_kbit_inference": cfg.prepare_for_kbit_inference,
+                               "bf16_autocast": bool(getattr(model, "_openvla_kbit_inference_prepared", False)),
+                               "actions": action_trace}, handle, indent=2)
 
             # Save a replay video of the episode
             save_rollout_video(
@@ -267,6 +330,11 @@ def eval_libero(cfg: GenerateConfig) -> None:
                     f"num_episodes/{task_description}": task_episodes,
                 }
             )
+
+        # 新增：每个 task 结束后关闭该 task 的仿真环境。
+        # 原因：循环里每个 task 都会新建一个 OffScreenRenderEnv，不关闭会持续占用
+        #      EGL context、显存和文件描述符（长时间评测会累积）。
+        env.close()
 
     # Save local log file
     log_file.close()

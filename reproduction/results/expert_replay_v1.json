@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "status": "completed_bounded_expert_replay",
+  "correspondence_sha256": "f0f2a852e0f1fb11e7bade60e6366f525cbe23b21e851727874911a74f8b0272",
+  "hdf5_sha256": "9d0b5435b313a8c0d7336b429b5f0f578be6f2a9f5f8a6dd67459ef388f3c74c",
+  "hdf5_hash_unchanged": true,
+  "task_id": 6,
+  "instruction": "pick up the black bowl next to the cookie box and place it on the plate",
+  "env_seed": 0,
+  "controller": "OSC_POSE",
+  "control_frequency_hz": 20,
+  "controller_matches_original": true,
+  "settling_steps": 10,
+  "no_op_filter": "official threshold 1e-4 with gripper-change preservation",
+  "expert_replays": 2,
+  "successes": 2,
+  "model_loads": 0,
+  "optimizer_updates": 0,
+  "policy_rollouts": 0,
+  "results": [
+    {
+      "partition": "train",
+      "episode_index": 185,
+      "demo_name": "demo_15",
+      "initial_state_sha256": "0739a274752081c7b2ad9a8160f84c11e236783c282fea8c78142a5b24ba3a46",
+      "action_count": 106,
+      "action_sha256_f32": "5515bd14682b36ad78d4c8ef453a3f58da2258e5252ba78d092563dc69616c97",
+      "success_at_end": true,
+      "first_goal_after_action_step": 89,
+      "final_bowl_pos_m": [
+        0.06916705185708315,
+        0.19636402174840925,
+        0.9063013301479419
+      ],
+      "final_plate_pos_m": [
+        0.06470803888181897,
+        0.19447492198195665,
+        0.9024931979883158
+      ],
+      "trace_file": "reproduction/results/expert_replay_episode185_v1.json",
+      "trace_sha256": "32cd81afe231eb57d4c571c53500824fea691dddc7bffd4f497021f09baa9c22",
+      "contact_sheet": "reproduction/results/expert_replay_frames_v1/episode185_expert.png",
+      "contact_sheet_sha256": "0bf19ac376d9fc016e5cd42a115b5e89e17204468b530a6e8184dd37c96c0ccd",
+      "final_post_action_image": "reproduction/results/expert_replay_frames_v1/episode185_final_post_action.png",
+      "final_image_sha256": "2f0135ecd503fd68321b1096b366b5a1a157ce39423e1e786ca3742334acda0d"
+    },
+    {
+      "partition": "validation",
+      "episode_index": 394,
+      "demo_name": "demo_22",
+      "initial_state_sha256": "3c96a53e2414a544aa623e88322b40987143b1fee4c591d7fd98cb5302c75a5b",
+      "action_count": 124,
+      "action_sha256_f32": "21b7941975208b73e7e2d85c80071ec3be9ddf0fedf5452907ed9d31a756259b",
+      "success_at_end": true,
+      "first_goal_after_action_step": 113,
+      "final_bowl_pos_m": [
+        0.06025660601004481,
+        0.20058511959676356,
+        0.9062102122284943
+      ],
+      "final_plate_pos_m": [
+        0.055901416473149675,
+        0.20204400840414344,
+        0.9024869905117427
+      ],
+      "trace_file": "reproduction/results/expert_replay_episode394_v1.json",
+      "trace_sha256": "a4d687444c7fcb88566481d95cd089b5047fe755ca8e52c7607a0d3f04908a6f",
+      "contact_sheet": "reproduction/results/expert_replay_frames_v1/episode394_expert.png",
+      "contact_sheet_sha256": "ddab31b3e16f76c98840a671182dc05e3a26126a05f1addfe9f7814090ecc3f7",
+      "final_post_action_image": "reproduction/results/expert_replay_frames_v1/episode394_final_post_action.png",
+      "final_image_sha256": "4fa0a6eed5ff7711c12d1667e69ba0b180843282cc448d1d2db95f7dd74c9ad7"
+    }
+  ],
+  "limits": [
+    "Two expert demonstrations, not a model success-rate or full-suite evaluation.",
+    "Expert demos use their own full original states, different from the prior two policy trials.",
+    "Exact selected-RLDS action provenance is established; regenerated image identity is not established.",
+    "A successful expert replay validates these two control trajectories, not every possible configuration."
+  ]
+}

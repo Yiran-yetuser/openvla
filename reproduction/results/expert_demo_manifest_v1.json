@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "status": "verified_pinned_public_expert_file",
+  "repo_id": "yifengzhu-hf/LIBERO-datasets",
+  "revision": "f13aa24a3da8c43c7225569f28c562979fa0e35a",
+  "file": "libero_spatial/pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate_demo.hdf5",
+  "url": "https://huggingface.co/datasets/yifengzhu-hf/LIBERO-datasets/resolve/f13aa24a3da8c43c7225569f28c562979fa0e35a/libero_spatial/pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate_demo.hdf5",
+  "local_file": "cache/libero_expert/libero_spatial/pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate_demo.hdf5",
+  "bytes": 632345992,
+  "sha256": "9d0b5435b313a8c0d7336b429b5f0f578be6f2a9f5f8a6dd67459ef388f3c74c",
+  "source_reference": "https://github.com/Lifelong-Robot-Learning/LIBERO#datasets",
+  "limits": [
+    "Original LIBERO HDF5, not the OpenVLA-regenerated no-noop RLDS file.",
+    "This manifest does not establish TFDS episode correspondence or successful replay."
+  ]
+}

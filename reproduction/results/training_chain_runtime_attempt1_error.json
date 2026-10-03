@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "failed_before_optimizer_update",
+  "stage": "before_update_actions",
+  "optimizer_updates": 0,
+  "error_type": "RuntimeError",
+  "error": "Input type (c10::BFloat16) and bias type (float) should be the same",
+  "call_path": "prediction -> get_vla_action -> predict_action -> vision_backbone -> timm patch_embed -> peft Conv2d base_layer -> torch conv2d",
+  "diagnosis": "Audit prediction omitted CUDA autocast after prepare_model_for_kbit_training promoted non-quantized vision layers to FP32. Actual training forward uses BF16 autocast.",
+  "repair": "Use training's BF16 autocast for prepared training-loader predictions, retaining no-autocast behavior for the production-loader comparison.",
+  "original_checkpoint_written": false,
+  "temporary_checkpoint_created": false,
+  "limitation": "This audit-script error is not evidence of the cause of the historical low rollout success rate."
+}

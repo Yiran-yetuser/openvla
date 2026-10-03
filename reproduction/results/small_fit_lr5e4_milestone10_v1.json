@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "status": "interim_checkpoint10_verified_not_final",
+  "only_spec_difference": "learning_rate",
+  "source_hashes": {
+    "adapter_model.safetensors": "493e3388a72106916cf0bc52d3f2122345a04bcc1dc7d9071b7cabbe4b079259",
+    "adapter_config.json": "0fae9c8b32b63b7a87f6766ff64ec2cd62bd9c707f819b72b398f830a0518697",
+    "dataset_statistics.json": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758"
+  },
+  "baseline_report_sha256": "33c9e5bc11dc04295adeda004e22eb291769ad9e8cdce4be5748357f154b1f36",
+  "evaluations": [
+    {
+      "step": 0,
+      "sha256": {
+        "adapter_model.safetensors": "493e3388a72106916cf0bc52d3f2122345a04bcc1dc7d9071b7cabbe4b079259",
+        "adapter_config.json": "b287af61401e65df6d02c2df0f34cdc295c545d771edd314389377cb28d58a9e",
+        "dataset_statistics.json": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758",
+        "optimizer_rng.pt": "c9b447b55f395fe4e4ab1212c9e33a0413227ed4ce3a59e51954fa28e56b18f9",
+        "evaluation.json": "89bd39e4d0a3c0d5eda0d0884f848561bb63ef37c22e32a7e49cc8721cf60584"
+      },
+      "control_summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.3839285714285714,
+          "teacher_token_l1": 0.14593837535014006,
+          "autoregressive_motion_mae": 0.11270311026229714,
+          "autoregressive_normalized_l1": 0.21429853684243833,
+          "gripper_correct": 15,
+          "small_translation_count": 9
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11218487394957984,
+          "autoregressive_motion_mae": 0.10004491293099038,
+          "autoregressive_normalized_l1": 0.1661974397850028,
+          "gripper_correct": 8,
+          "small_translation_count": 6
+        }
+      },
+      "reference_summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.3839285714285714,
+          "teacher_token_l1": 0.14593837535014006,
+          "autoregressive_motion_mae": 0.11270311026229714,
+          "autoregressive_normalized_l1": 0.21429853684243833,
+          "gripper_correct": 15,
+          "small_translation_count": 9
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11218487394957984,
+          "autoregressive_motion_mae": 0.10004491293099038,
+          "autoregressive_normalized_l1": 0.1661974397850028,
+          "gripper_correct": 8,
+          "small_translation_count": 6
+        }
+      }
+    },
+    {
+      "step": 10,
+      "sha256": {
+        "adapter_model.safetensors": "b36d34ef45b781f34bdec0b569cd210111fbd0f5d6c62c40c86b84a0baee5207",
+        "adapter_config.json": "b287af61401e65df6d02c2df0f34cdc295c545d771edd314389377cb28d58a9e",
+        "dataset_statistics.json": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758",
+        "optimizer_rng.pt": "b87b8114518bcd0f5d5b3b0965db73761aafa8d56567e8a47fc67285825c8dd0",
+        "evaluation.json": "99f7cab6091b62661c936112e06acbd35642b4cfb0ac3b0548f36e2daa6664c3"
+      },
+      "control_summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 1.0,
+          "teacher_token_l1": 0.0,
+          "autoregressive_motion_mae": 0.001350413966762076,
+          "autoregressive_normalized_l1": 0.00203905691259053,
+          "gripper_correct": 16,
+          "small_translation_count": 0
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3392857142857143,
+          "teacher_token_l1": 0.123109243697479,
+          "autoregressive_motion_mae": 0.07039658622995013,
+          "autoregressive_normalized_l1": 0.15287163065735648,
+          "gripper_correct": 8,
+          "small_translation_count": 0
+        }
+      },
+      "reference_summary": {
+        "fit": {
+          "samples": 16,
+          "teacher_token_accuracy": 0.9732142857142858,
+          "teacher_token_l1": 0.002240896358543418,
+          "autoregressive_motion_mae": 0.005096859865909591,
+          "autoregressive_normalized_l1": 0.006505965335235883,
+          "gripper_correct": 16,
+          "small_translation_count": 1
+        },
+        "probe_previously_seen": {
+          "samples": 8,
+          "teacher_token_accuracy": 0.3214285714285714,
+          "teacher_token_l1": 0.11134453781512606,
+          "autoregressive_motion_mae": 0.0921449432800466,
+          "autoregressive_normalized_l1": 0.16285216047161954,
+          "gripper_correct": 8,
+          "small_translation_count": 5
+        }
+      }
+    }
+  ],
+  "limits": [
+    "Intermediate 0/10 snapshot evidence, not a final50 result",
+    "No heldout or simulator success-rate claim"
+  ]
+}

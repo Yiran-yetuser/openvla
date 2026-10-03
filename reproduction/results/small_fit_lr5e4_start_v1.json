@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "status": "verified_start_not_final",
+  "only_spec_difference": "learning_rate",
+  "baseline_report_sha256": "33c9e5bc11dc04295adeda004e22eb291769ad9e8cdce4be5748357f154b1f36",
+  "control_spec": {
+    "schema_version": 1,
+    "source_checkpoint": "/home/yyz/openvla/adapter-tmp/libero_spatial_full_paper/openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+lora-r32+dropout-0.0+q-4bit--image_aug",
+    "optimizer_updates": 50,
+    "learning_rate": 0.0005,
+    "fit_frames": 16,
+    "microbatch": 2,
+    "accumulation": 8,
+    "augmentation": false,
+    "nf4": true,
+    "double_quant": false,
+    "seed": 7,
+    "milestones": [
+      0,
+      10,
+      25,
+      50
+    ],
+    "claim": "memorization probe; no generalization or rollout success claim",
+    "original_sha256": {
+      "adapter_model.safetensors": "493e3388a72106916cf0bc52d3f2122345a04bcc1dc7d9071b7cabbe4b079259",
+      "adapter_config.json": "0fae9c8b32b63b7a87f6766ff64ec2cd62bd9c707f819b72b398f830a0518697",
+      "dataset_statistics.json": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758"
+    }
+  },
+  "step0_snapshot_sha256": {
+    "adapter_model.safetensors": "493e3388a72106916cf0bc52d3f2122345a04bcc1dc7d9071b7cabbe4b079259",
+    "adapter_config.json": "b287af61401e65df6d02c2df0f34cdc295c545d771edd314389377cb28d58a9e",
+    "dataset_statistics.json": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758",
+    "optimizer_rng.pt": "c9b447b55f395fe4e4ab1212c9e33a0413227ed4ce3a59e51954fa28e56b18f9",
+    "evaluation.json": "89bd39e4d0a3c0d5eda0d0884f848561bb63ef37c22e32a7e49cc8721cf60584"
+  },
+  "step0_rows_exactly_match_reference": true,
+  "original_hashes_verified": true,
+  "step0_summary": {
+    "fit": {
+      "samples": 16,
+      "teacher_token_accuracy": 0.3839285714285714,
+      "teacher_token_l1": 0.14593837535014006,
+      "autoregressive_motion_mae": 0.11270311026229714,
+      "autoregressive_normalized_l1": 0.21429853684243833,
+      "gripper_correct": 15,
+      "small_translation_count": 9
+    },
+    "probe_previously_seen": {
+      "samples": 8,
+      "teacher_token_accuracy": 0.3214285714285714,
+      "teacher_token_l1": 0.11218487394957984,
+      "autoregressive_motion_mae": 0.10004491293099038,
+      "autoregressive_normalized_l1": 0.1661974397850028,
+      "gripper_correct": 8,
+      "small_translation_count": 6
+    }
+  },
+  "limits": [
+    "Not a final 50-update result",
+    "Eight probe frames were seen by original full adapter, not held out",
+    "No rollout or historical-root-cause claim"
+  ]
+}
