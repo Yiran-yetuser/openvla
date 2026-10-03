@@ -16,6 +16,8 @@
 
 本轮代码与专家/视频诊断证据已提交并推送：`99fdb10`，远程branch和PR #1 head已核对一致，PR描述已更新。收尾66项显式CPU测试、44个Python AST、75-cell Notebook schema/全部code AST及第37–40节4个reader实际stdout/存储输出核验通过；已有视频/专家证据只读重验通过，没有重新仿真。12:24 CST的宿主复核仍是上述3个Fast3R worker活跃，GPU compute-app为空，扩展仍未启动；当前唯一未跟踪文件为用户`test.jpg`，未上传。后续接手以实时状态为准。
 
+旧线程goal仍要求完成500次全量评测，但连续3次goal接手均确认：该评测没有宿主进程，原日志SHA保持`3962f67b0fb67936090e3b969dc61494693008dd7e5e51577bd3eb19b188038b`，仅382次/7个任务汇总，最终成功率仍为null。用户后续要求停止旧评测并先诊断，当前GPU授权仅为上述200步扩展，不能从旧goal自动扩大至500次。这个旧goal因需要用户重新确认全量评测授权而进入blocked，不是完成，也不是自行暂停；保留其原始500次目标。`openvla-200`每小时接手仍ACTIVE，不受旧goal阻塞影响。第三次核验时PID115598已不在宿主列表，但Fast3R PID95939/95996仍活跃；仍须等全部worker/锁退出，不将局部进程消失当作整个项目完成。
+
 ## 当前阶段完成：正式推理入口与4次有界闭环对照
 
 用户明确选择先修正推理入口、再小规模闭环验证。`get_vla_action`现在根据模型的准备标志自动进入BF16 autocast；默认路径不启用该上下文，单元测试已验证。训练任务实际是“pick up the black bowl next to the cookie box and place it on the plate”，已用LIBERO benchmark元数据确认对应task ID 6，不能沿用旧task0控制。
