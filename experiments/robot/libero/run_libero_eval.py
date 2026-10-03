@@ -77,6 +77,7 @@ class GenerateConfig:
     num_steps_wait: int = 10                         # Number of steps to wait for objects to stabilize in sim
     num_trials_per_task: int = 50                    # Number of rollouts per task
     task_ids: Optional[List[int]] = None             # Bounded diagnostic subset; None = full suite
+    initial_state_offset: int = 0                    # First benchmark initial-state index in each selected task
     trace_actions: bool = False                     # JSON action + robot state traces for failure diagnosis
     fail_fast: bool = False                         # Diagnostic mode: propagate errors, don't call them policy failures
 
@@ -150,6 +151,9 @@ def eval_libero(cfg: GenerateConfig) -> None:
     local_log_filepath = os.path.join(cfg.local_log_dir, run_id + ".txt")
     log_file = open(local_log_filepath, "w")
     print(f"Logging to local log file: {local_log_filepath}")
+    evaluation_config = json.dumps(vars(cfg), default=str, sort_keys=True)
+    print(f"Evaluation config: {evaluation_config}")
+    log_file.write(f"Evaluation config: {evaluation_config}\n")
 
     # Initialize Weights & Biases logging as well
     if cfg.use_wandb:
@@ -166,8 +170,13 @@ def eval_libero(cfg: GenerateConfig) -> None:
     selected_tasks = list(range(num_tasks_in_suite)) if cfg.task_ids is None else cfg.task_ids
     assert selected_tasks and len(set(selected_tasks)) == len(selected_tasks)
     assert all(0 <= task_id < num_tasks_in_suite for task_id in selected_tasks)
+    if cfg.num_trials_per_task < 1 or cfg.initial_state_offset < 0:
+        raise ValueError("num_trials_per_task must be positive and initial_state_offset nonnegative")
     log_file.write(f"Selected task IDs: {selected_tasks}; trials per task: {cfg.num_trials_per_task}\n")
+    trial_state_stop = cfg.initial_state_offset + cfg.num_trials_per_task
+    log_file.write(f"Initial state indices per task: [{cfg.initial_state_offset}, {trial_state_stop})\n")
     log_file.write(f"prepare_for_kbit_inference: {cfg.prepare_for_kbit_inference}\n")
+    log_file.flush()
     print(f"Task suite: {cfg.task_suite_name}")
     log_file.write(f"Task suite: {cfg.task_suite_name}\n")
 
@@ -182,6 +191,11 @@ def eval_libero(cfg: GenerateConfig) -> None:
 
         # Get default LIBERO initial states
         initial_states = task_suite.get_task_init_states(task_id)
+        if trial_state_stop > len(initial_states):
+            raise ValueError(
+                f"task {task_id} has {len(initial_states)} initial states; "
+                f"requested indices [{cfg.initial_state_offset}, {trial_state_stop})"
+            )
 
         # Initialize LIBERO environment and task description
         env, task_description = get_libero_env(task, cfg.model_family, resolution=256)
@@ -189,6 +203,7 @@ def eval_libero(cfg: GenerateConfig) -> None:
         # Start episodes
         task_episodes, task_successes = 0, 0
         for episode_idx in tqdm.tqdm(range(cfg.num_trials_per_task)):
+            init_state_idx = cfg.initial_state_offset + episode_idx
             print(f"\nTask: {task_description}")
             log_file.write(f"\nTask: {task_description}\n")
 
@@ -196,7 +211,7 @@ def eval_libero(cfg: GenerateConfig) -> None:
             env.reset()
 
             # Set initial states
-            init_state = np.asarray(initial_states[episode_idx])
+            init_state = np.asarray(initial_states[init_state_idx])
             obs = env.set_init_state(init_state)
 
             # Setup
@@ -291,10 +306,10 @@ def eval_libero(cfg: GenerateConfig) -> None:
             task_episodes += 1
             total_episodes += 1
             if cfg.trace_actions:
-                trace_path = Path(cfg.local_log_dir) / f"{run_id}--task{task_id}-trial{episode_idx}.json"
+                trace_path = Path(cfg.local_log_dir) / f"{run_id}--task{task_id}-trial{init_state_idx}.json"
                 with trace_path.open("x") as handle:
                     json.dump({"task_id": task_id, "instruction": task_description,
-                               "trial": episode_idx, "success": bool(done), "error": episode_error,
+                               "trial": init_state_idx, "success": bool(done), "error": episode_error,
                                "init_state_sha256": hashlib.sha256(init_state.tobytes()).hexdigest(),
                                "init_state_shape": list(init_state.shape), "init_state_dtype": str(init_state.dtype),
                                "checkpoint": str(cfg.pretrained_checkpoint), "seed": cfg.seed,
