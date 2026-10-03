@@ -250,3 +250,25 @@ Fast3R及锁进程退出并确认GPU空闲后，运行`reproduction/verify_kbit_
 880个policy动作到simulator动作的六维运动保持与夹爪转换逐条核验；每个trace SHA、指标重算、原base及完整snapshot（含optimizer/statistics）SHA不变。没有训练更新，原日志与视频保留。完整评测的CPU验收也改为10个独立任务各50次、逐次/累计/汇总一致且无runtime异常；旧382次日志核验`full_eval_log_audit_v1.json`的final_success_rate=null，仍未完成500次实验。
 
 收尾通过44项CPU测试、32个reproduction Python文件及两个生产入口AST、71-cell Notebook schema/全部code AST；第37/38节证据reader的实际stdout与Notebook存储输出逐字一致。闭环核验还检查两份小型文本日志逐次结果与trace成功数一致。仅提交代码与可审计小型结果，不提交权重、数据、大日志或视频。
+
+## 39. 失败视频与原始专家动作的有界核查（2026-10-03）
+
+本轮不重跑策略、不修改checkpoint，只读取已经产生的4个task6失败视频和对应trace。`analyze_failure_videos.py`采用显式220帧上限逐帧解码，避免imageio reader的无限长度提示造成内存错误；4段视频共880帧，逐段核对帧数、动作步号和解码关键帧哈希，并保存12帧contact sheet。MP4是有损编码，解码哈希不能证明它与trace记录的原始policy RGB逐像素相同。第一次无界读取导致的`MemoryError`作为`video_decode_prewrite_error_v1.json`保留，修复后没有覆盖原策略证据。
+
+从trace可验证的是：默认trial0在第42步首次close、trial1在第42步首次close；兼容路径trial0在第41步、trial1在第36步。后两段有重复开合，前两段的末期观测中目标碗似乎被带向盘边或盘外，但contact sheet是策略动作前图像，不能充当接触/抓取真值。人工标签仅写入`clean_task_visual_review_v1.json`，明确标为视觉解释，不据此断言“已抓取”或唯一因果。
+
+为区分“模拟器/控制器整体坏掉”和“策略动作失败”，从公开、固定revision的原始LIBERO HDF5取得目标任务demo文件（SHA256 `9d0b5435b313a8c0d7336b429b5f0f578be6f2a9f5f8a6dd67459ef388f3c74c`，文件留在被忽略的`cache/`）。10个已选RLDS episode与原始50个demo的完整float32动作序列均是唯一匹配；这是动作来源对应，不是图像/状态相同证明。使用其中train episode185/demo15和validation episode394/demo22各自HDF5完整初始状态、原OSC_POSE控制器、官方无动作阈值过滤和10步settle，专家动作重放成功2/2，动作数106/124，分别在动作步89/113后达到目标。重放没有加载OpenVLA、没有优化更新、不是策略成功率。
+
+因此，当前证据排除了“这条模拟器/OSC_POSE/夹爪执行链路在所有状态都不能完成目标”，但没有排除状态分布、策略偏离演示后的恢复、释放时机、视觉动作映射或训练不足。策略失败视频的阶段标签和2次专家成功不能被合并成单一根因，也不能替代500次全量评测。
+
+独立CPU核验`failure_diagnosis_verification_v1.json`确认880帧、230条原始专家动作、2次专家成功，新增/优化器更新/策略rollout均为0；保留原HDF5和视频，不把大文件上传到GitHub。
+
+## 40. 有界训练量扩展：实现已准备，尚未运行（2026-10-03）
+
+为回答“50次更新是否只是过短探针”，已写入`reproduction/extend_clean_task.py`和`test_clean_task_extend.py`，但本轮没有启动GPU。它从已核验的`runs/clean_task_v1/step_050`不可变分叉，父snapshot/spec/原最终报告SHA还必须匹配既有`clean_task_verification_v1.json`。先重载并逐帧比较父checkpoint的teacher/AR预测，恢复保存的AdamW状态与Torch CPU/CUDA RNG，再在完全相同的8/2 episode隔离、训练集统计、NF4/BF16/doubleFalse、rank32/alpha16、seed7、lr1e-4、无增强/无裁剪下新增150次更新，累计到200次；里程碑为50/100/150/200。父checkpoint、旧结果和partial失败证据不覆盖。保存状态和采样前缀的检查不等于已证明中断恢复或连续200步训练位级等价。
+
+该扩展仍是单任务、两条验证episode的训练量诊断，不是论文配方、全任务泛化或闭环成功率。采样前缀和历史父spec/hash已在CPU dry-run核验；扩展输出不存在，不能填写任何200步指标。2026-10-03 12:08 CST额度查询ordinaryUsageAllowed=true；12:13 CST宿主GPU的compute-app列表为空，但Fast3R仍有3个worker（PID95939/95996/115598）。当前等待的原因是用户要求等Fast3R结束，不是额度耗尽；观测记录见`clean_task_extension_preflight_v1.json`。之后须重新核实所有worker/锁和GPU，不能把空compute列表当作Fast3R完成。可用磁盘约32GiB，启动守卫要求至少10GiB。不使用免费reset credit、不抢占、不重复已完成实验。
+
+本轮明确选择的66项CPU测试通过；4个旧GPU实测脚本有导入即加载模型/执行CUDA的副作用，等待期间不运行。`verify_clean_task_extend.py`在最终报告存在后CPU重载真实帧，核验四个节点的teacher目标/AR动作指标和身份、snapshot与报告逐项一致、51..200连续loss及真实训练抽样/均值、父hash和base未变、最终生产loader差异。重复loss记录须诊断，不能静默去重或伪造完整更新序列。缺少最终结果时验收拒绝标为完成。
+
+用户已授权此扩展及上传代码、Notebook和小型诊断证据。每小时低频接手heartbeat `openvla-200`已由应用确认ACTIVE；Fast3R仍运行、GPU忙或状态无变化时静默，不重复启动。Fast3R结束且宿主GPU空闲后只启动此150次新增更新；有真实结果后补充本节、Notebook并推送现有PR #1，完成后删除heartbeat。定时接手需要电脑开机、应用运行和可用额度，不保证额度刷新瞬间接手。此前382次日志仍是未完成的全量评测（5成功、7任务汇总、final_success_rate=null），不因本轮有界证据改写。

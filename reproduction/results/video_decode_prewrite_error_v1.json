@@ -1,0 +1,10 @@
+{
+  "status": "failed_before_first_contact_sheet",
+  "script": "reproduction/analyze_failure_videos.py",
+  "error": "MemoryError at frames = list(reader)",
+  "diagnosis": "imageio ffmpeg reader reports an infinite length hint; list(reader) attempts excessive preallocation. Fixed by bounded iteration without a length hint.",
+  "new_rollouts": 0,
+  "optimizer_updates": 0,
+  "source_videos_modified": false,
+  "retry_scope": "one CPU-only decode retry; existing empty output directory retained"
+}

@@ -53,8 +53,8 @@ def specification(audit):
             "autoregressive": "three fixed stage frames per episode; not full-frame or simulator evaluation"}
 
 
-def sample_schedule(frame_count, updates=50):
-    if frame_count < 2 or not 1 <= updates <= 50:
+def sample_schedule(frame_count, updates=50, maximum=50):
+    if maximum not in (50, 200) or frame_count < 2 or not 1 <= updates <= maximum:
         raise ValueError("Invalid bounded sampling budget")
     result, epoch = [], 0
     while len(result) < updates * 16:
@@ -63,6 +63,26 @@ def sample_schedule(frame_count, updates=50):
         result.extend(order)
         epoch += 1
     return result[:updates * 16]
+
+
+def update_limit(spec):
+    limits = {"clean_task_v1": 50, "clean_task_extend_v1": 200}
+    limit = limits.get(spec["experiment"])
+    if limit is None or spec["optimizer_updates"] != limit:
+        raise ValueError("Unsupported fixed experiment budget")
+    return limit
+
+
+def resume_record(path, spec):
+    if (spec["experiment"] == "clean_task_extend_v1"
+            and str(path.resolve()) == spec["parent_checkpoint"]):
+        if sha256(path / "snapshot.json") != spec["parent_snapshot_sha256"]:
+            raise ValueError("Parent snapshot manifest changed")
+        record = verify_snapshot(path, spec["parent_spec"])
+        if record["step"] != 50:
+            raise ValueError("Extension requires the verified 50-update parent")
+        return record
+    return verify_snapshot(path, spec)
 
 
 def load_frames(audit):
@@ -120,6 +140,7 @@ def execute(audit, spec, state, resume):
     from reproduction.action_metrics import training_target, metrics
     from experiments.robot.openvla_utils import get_vla_action, get_vla, get_processor
     from types import SimpleNamespace
+    budget = update_limit(spec)
     torch.manual_seed(7)
     np.random.seed(7)
     frames = load_frames(audit)
@@ -154,7 +175,7 @@ def execute(audit, spec, state, resume):
             batch([row])
     state.update(supervision_frames_verified=sum(map(len, frames.values())))
     atomic_json(RUN / "progress.json", state)
-    record = verify_snapshot(resume, spec) if resume else None
+    record = resume_record(resume, spec) if resume else None
     quant = BitsAndBytesConfig(load_in_4bit=True, bnb_4bit_quant_type="nf4",
                               bnb_4bit_compute_dtype=torch.bfloat16, bnb_4bit_use_double_quant=False)
     base = AutoModelForVision2Seq.from_pretrained(base_path, torch_dtype=torch.bfloat16,
@@ -179,7 +200,7 @@ def execute(audit, spec, state, resume):
         torch.set_rng_state(saved["cpu_rng"])
         torch.cuda.set_rng_state_all(saved["cuda_rng"])
         del saved
-    schedule = sample_schedule(len(frames["train"]))
+    schedule = sample_schedule(len(frames["train"]), budget, maximum=budget)
 
     def forward(data, production=False):
         from contextlib import nullcontext
@@ -256,8 +277,16 @@ def execute(audit, spec, state, resume):
 
     if not record:
         save(0, evaluate(0))
+    elif spec["experiment"] == "clean_task_extend_v1" and str(resume.resolve()) == spec["parent_checkpoint"]:
+        initial = evaluate(start)
+        prior = json.loads((resume / "evaluation.json").read_text())
+        for split in frames:
+            for key in ("teacher_rows", "autoregressive_rows"):
+                assert initial["splits"][split][key] == prior["splits"][split][key], "Parent prediction mismatch; no update permitted"
+        state["parent_predictions_verified"] = True
+        save(start, initial)
     with (RUN / f"losses-{time.time_ns()}.jsonl").open("x") as log:
-        for step in range(start + 1, 51):
+        for step in range(start + 1, budget + 1):
             model.train()
             optimizer.zero_grad(set_to_none=True)
             losses = []
@@ -280,17 +309,17 @@ def execute(audit, spec, state, resume):
             log.write(json.dumps({"optimizer_step": step, "sample_indices": indices,
                                   "microbatch_losses": losses, "mean_loss": state["last_mean_loss"]}, allow_nan=False) + "\n")
             log.flush()
-            print(f"Update {step}/50 loss={state['last_mean_loss']:.6f}", flush=True)
+            print(f"Update {step}/{budget} loss={state['last_mean_loss']:.6f}", flush=True)
             if step in spec["milestones"]:
                 save(step, evaluate(step))
     peak = torch.cuda.max_memory_allocated() / 2**30
     del optimizer, trainable, model, base
     gc.collect()
     torch.cuda.empty_cache()
-    cfg = SimpleNamespace(pretrained_checkpoint=str(RUN / "step_050"), base_model_path=base_path,
+    cfg = SimpleNamespace(pretrained_checkpoint=str(RUN / f"step_{budget:03d}"), base_model_path=base_path,
                           load_in_4bit=True, load_in_8bit=False, bnb_double_quant=False)
     model, processor = get_vla(cfg), get_processor(cfg)
-    production = evaluate(50, production=True)
+    production = evaluate(budget, production=True)
     evaluations = [json.loads((p.parent / "evaluation.json").read_text()) for p in sorted(RUN.glob("step_???/snapshot.json"))]
     equal = all([r["action"] for r in evaluations[-1]["splits"][s]["autoregressive_rows"]] ==
                 [r["action"] for r in production["splits"][s]["autoregressive_rows"]] for s in frames)
@@ -300,12 +329,17 @@ def execute(audit, spec, state, resume):
               "spec": spec, "evaluations": evaluations, "production_evaluation": production,
               "production_actions_equal": equal, "base_checkpoint_modified": False,
               "training_peak_allocated_gib": peak,
-              "limits": ["Single task, 8/2 episodes, one seed, only 50 updates; not full-paper reproduction.",
+              "limits": [f"Single task, 8/2 episodes, one seed, only {budget} updates; not full-paper reproduction.",
                          "Episode validation isolation holds for this fresh adapter, not proof about OXE pretraining overlap.",
                          "Train teacher uses 24 monitor frames; validation teacher uses all eligible frames.",
                          "Autoregressive uses fixed 24 train/6 validation frames, not all-frame action metrics.",
                          "No simulator rollout or task success-rate measurement.",
-                         "50 updates draw 800 of the training frames, less than one full epoch."]}
+                         ("50 updates draw 800 of the training frames, less than one full epoch." if budget == 50 else
+                          "200 cumulative updates draw 3200 frames across seeded epochs; 150 updates are new in this extension.")]}
+    if spec["experiment"] == "clean_task_extend_v1":
+        report.update(parent_updates=50, new_updates=150,
+                      parent_predictions_verified=state.get("parent_predictions_verified", False),
+                      continuation_limits="Verified parent optimizer/RNG restoration and sampling prefix; not a bitwise equivalence claim against a separate uninterrupted 200-step run.")
     with RESULT.open("x") as handle:
         json.dump(report, handle, indent=2, allow_nan=False)
     state.update(status=report["status"], result=str(RESULT))
