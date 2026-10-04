@@ -1,0 +1,228 @@
+{
+  "schema_version": 1,
+  "status": "verified_complete_official_checkpoint_single_seed_control",
+  "source_log": {
+    "path": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_04-00_47_39--official_full_500_nf4_seed7_20261004.txt",
+    "bytes": 165861,
+    "sha256": "281182c6fc9fd6ab6e76abd2b99f47314eeb5ea11436e2c06556a3531a4d9901"
+  },
+  "parser_call": {
+    "function": "parse_eval_text",
+    "expected_tasks": 10,
+    "trials_per_task": 50
+  },
+  "parser_report": {
+    "schema_version": 1,
+    "status": "complete",
+    "suite": "libero_spatial",
+    "expected_tasks": 10,
+    "trials_per_task": 50,
+    "episodes": 500,
+    "successes": 413,
+    "completed_task_summaries": 10,
+    "tasks": [
+      {
+        "task": "pick up the black bowl between the plate and the ramekin and place it on the plate",
+        "episodes": 50,
+        "successes": 42,
+        "summary_verified": true,
+        "success_rate": 0.84
+      },
+      {
+        "task": "pick up the black bowl next to the ramekin and place it on the plate",
+        "episodes": 50,
+        "successes": 46,
+        "summary_verified": true,
+        "success_rate": 0.92
+      },
+      {
+        "task": "pick up the black bowl from table center and place it on the plate",
+        "episodes": 50,
+        "successes": 43,
+        "summary_verified": true,
+        "success_rate": 0.86
+      },
+      {
+        "task": "pick up the black bowl on the cookie box and place it on the plate",
+        "episodes": 50,
+        "successes": 43,
+        "summary_verified": true,
+        "success_rate": 0.86
+      },
+      {
+        "task": "pick up the black bowl in the top drawer of the wooden cabinet and place it on the plate",
+        "episodes": 50,
+        "successes": 34,
+        "summary_verified": true,
+        "success_rate": 0.68
+      },
+      {
+        "task": "pick up the black bowl on the ramekin and place it on the plate",
+        "episodes": 50,
+        "successes": 44,
+        "summary_verified": true,
+        "success_rate": 0.88
+      },
+      {
+        "task": "pick up the black bowl next to the cookie box and place it on the plate",
+        "episodes": 50,
+        "successes": 47,
+        "summary_verified": true,
+        "success_rate": 0.94
+      },
+      {
+        "task": "pick up the black bowl on the stove and place it on the plate",
+        "episodes": 50,
+        "successes": 41,
+        "summary_verified": true,
+        "success_rate": 0.82
+      },
+      {
+        "task": "pick up the black bowl next to the plate and place it on the plate",
+        "episodes": 50,
+        "successes": 40,
+        "summary_verified": true,
+        "success_rate": 0.8
+      },
+      {
+        "task": "pick up the black bowl on the wooden cabinet and place it on the plate",
+        "episodes": 50,
+        "successes": 33,
+        "summary_verified": true,
+        "success_rate": 0.66
+      }
+    ],
+    "runtime_errors": [],
+    "pending_trial": null,
+    "pending_total_summary": false,
+    "final_success_rate": 0.826,
+    "interim_success_rate": 0.826,
+    "limits": [
+      "Log completeness and arithmetic only; does not prove experiment configuration parity.",
+      "Incomplete logs have no final success rate."
+    ]
+  },
+  "metric": {
+    "suite": "libero_spatial",
+    "episodes": 500,
+    "successes": 413,
+    "success_rate": 0.826,
+    "per_task": [
+      {
+        "task_id": 0,
+        "canonical_task": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 42,
+        "success_rate": 0.84
+      },
+      {
+        "task_id": 1,
+        "canonical_task": "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 46,
+        "success_rate": 0.92
+      },
+      {
+        "task_id": 2,
+        "canonical_task": "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 43,
+        "success_rate": 0.86
+      },
+      {
+        "task_id": 3,
+        "canonical_task": "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 43,
+        "success_rate": 0.86
+      },
+      {
+        "task_id": 4,
+        "canonical_task": "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 34,
+        "success_rate": 0.68
+      },
+      {
+        "task_id": 5,
+        "canonical_task": "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 44,
+        "success_rate": 0.88
+      },
+      {
+        "task_id": 6,
+        "canonical_task": "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 47,
+        "success_rate": 0.94
+      },
+      {
+        "task_id": 7,
+        "canonical_task": "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 41,
+        "success_rate": 0.82
+      },
+      {
+        "task_id": 8,
+        "canonical_task": "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 40,
+        "success_rate": 0.8
+      },
+      {
+        "task_id": 9,
+        "canonical_task": "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate",
+        "episodes": 50,
+        "successes": 33,
+        "success_rate": 0.66
+      }
+    ]
+  },
+  "checks": {
+    "complete_500_log_and_task_summaries": true,
+    "all_task_ids_0_through_9_once": true,
+    "50_trials_per_task": true,
+    "serialized_config_matches_requested_control": true,
+    "official_checkpoint_revision_matches_manifest": true,
+    "zero_runtime_errors": true
+  },
+  "run_config": {
+    "base_model_path": "openvla/openvla-7b",
+    "bnb_double_quant": false,
+    "center_crop": true,
+    "fail_fast": true,
+    "initial_state_offset": 0,
+    "load_in_4bit": true,
+    "load_in_8bit": false,
+    "local_log_dir": "./experiments/logs",
+    "model_family": "openvla",
+    "num_steps_wait": 10,
+    "num_trials_per_task": 50,
+    "prepare_for_kbit_inference": false,
+    "pretrained_checkpoint": "/home/yyz/openvla/cache/official_libero_spatial",
+    "run_id_note": "official_full_500_nf4_seed7_20261004",
+    "seed": 7,
+    "task_ids": null,
+    "task_suite_name": "libero_spatial",
+    "trace_actions": false,
+    "unnorm_key": "libero_spatial",
+    "use_wandb": false,
+    "wandb_entity": "YOUR_WANDB_ENTITY",
+    "wandb_project": "YOUR_WANDB_PROJECT"
+  },
+  "checkpoint_manifest": {
+    "path": "reproduction/results/official_checkpoint_manifest.json",
+    "revision": "962318cec55ac10993ff0f5f43eda9a270b4c873",
+    "total_bytes": 15085047523,
+    "status_before_control": "downloaded_not_evaluated"
+  },
+  "task_map_source": {
+    "file": "/home/yyz/LIBERO/libero/libero/benchmark/libero_suite_task_map.py",
+    "sha256": "0c950df0a785aa55de968bb38ccd865d2017f71ddbe6f48cfd05ac0742b6d62d",
+    "libero_git_revision": "8f1084e3132a39270c3a13ebe37270a43ece2a01"
+  },
+  "evaluator_project_git_revision": "70a33468eeb3437fe1724daabe50d042971382d8",
+  "paper_comparison_limit": "This is a single-seed, NF4 inference control; it is not directly comparable to the paper's BF16 three-seed mean."
+}

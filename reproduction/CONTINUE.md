@@ -1,6 +1,18 @@
-# OpenVLA 接手记录（2026-10-03 更新）
+# OpenVLA 接手记录（2026-10-04 更新）
 
-## 当前接手状态：step-200 扩展与36集留出离线评估完成；不支持训练集准确率外推
+## 当前接手状态（2026-10-04）：本地adapter与官方checkpoint两项500条评测均已审计
+
+用户已授权完成最后复现。本地432-trajectory、3500-update近似QLoRA adapter的LIBERO-Spatial分数为 **5/500（1.0%）**：532条实际rollout中，500个唯一状态计分，旧任务7的32条残段排除并由完整任务7替代。逐任务成功数为 `[0,1,0,2,0,0,2,0,0,0]`，15项独立装配审计检查全部通过，详见 `results/full_eval_merged_audit_v1.json`。
+
+官方 `openvla-7b-finetuned-libero-spatial` checkpoint同入口控制也已完成并通过独立审计：**413/500（82.6%）**，seed7、10个canonical任务各50个初始状态、center crop、NF4/BF16、`double_quant=False`。checkpoint revision为 `962318cec55ac10993ff0f5f43eda9a270b4c873`；10项任务成功数为 `[42,46,43,43,34,44,47,41,40,33]`。服务正常退出（exit 0），500条完整且没有runtime errors。证据在 `results/official_full_eval_audit_v1.json`。
+
+固定state-0的官方checkpoint量化配对已完成：相同10个task/state下，`double_quant=False` 和 `True` 都是8/10；8对均成功、2对均失败、没有结果翻转。这个10状态诊断不是suite成功率估计，也不足以证明设置普遍等效。配对审计 `results/official_dq_pair_audit_v1.json` 验证共享配置、checkpoint revision、任务/state匹配及评测器中NF4/BF16加载代码；runtime paired log未输出loader banner，这一限制已记录。
+
+结果结论边界：本地adapter与官方全量run的double-quant配置不同，不能把分数差归因于checkpoint单一因素。官方控制是单seed NF4，不能直接等同论文报告的84.7±0.9% BF16三seed平均；本地3500更新/432条轨迹也不是官方50K-step配方。Notebook第42节、`DIAGNOSIS.md`和provenance已写入最终表格及来源。更新现有Yiran-yetuser/openvla PR #1时只暂存复现代码、Notebook、紧凑审计JSON和说明；三个`clean_task_*`用户结果、`test.jpg`、原始日志、权重、数据及视频保持原位。
+
+## 历史接手快照（2026-10-03）
+
+## 历史状态：step-200扩展与36集留出离线评估完成；不支持训练集准确率外推
 
 Fast3R PID 95939/95996 是无效残留；宿主复查后没有需要等待的 Fast3R worker/锁。按用户要求，在GPU空闲时完成 clean_task_extend_v1：从已核验 step 050 分叉，恢复 AdamW/Torch RNG，新加150步至累计200。四个checkpoint及51–200 loss通过独立CPU验收，父checkpoint及OXE base未变。
 
