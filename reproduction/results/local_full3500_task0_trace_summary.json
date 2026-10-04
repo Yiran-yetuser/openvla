@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "episodes": 2,
+  "successes": 0,
+  "records": [
+    {
+      "file": "EVAL-libero_spatial-openvla-2026_10_01-02_04_18--diagnostic_full3500_task0--task0-trial0.json",
+      "task_id": 0,
+      "trial": 0,
+      "success": false,
+      "steps": 220,
+      "mean_translation_command_norm": 0.004243542674147392,
+      "translation_below_0p02_fraction": 1.0,
+      "eef_axis_span_m": [
+        0.0016509435240323611,
+        0.0017514917978632364,
+        0.0016923474901251456
+      ],
+      "eef_max_distance_from_start_m": 0.002942342275273131,
+      "open_gripper_command_fraction": 1.0,
+      "gripper_command_switches": 0
+    },
+    {
+      "file": "EVAL-libero_spatial-openvla-2026_10_01-02_04_18--diagnostic_full3500_task0--task0-trial1.json",
+      "task_id": 0,
+      "trial": 1,
+      "success": false,
+      "steps": 220,
+      "mean_translation_command_norm": 0.005314360499530242,
+      "translation_below_0p02_fraction": 0.9954545454545455,
+      "eef_axis_span_m": [
+        0.0015158209187066951,
+        0.0029392220690890036,
+        0.0016694563522907657
+      ],
+      "eef_max_distance_from_start_m": 0.003651331676549884,
+      "open_gripper_command_fraction": 1.0,
+      "gripper_command_switches": 0
+    }
+  ],
+  "scope": "Fixed task/initial-state diagnostic, NOT full-suite success estimate",
+  "threshold_definition": "Translation command Euclidean norm <0.02; not physical displacement"
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "status": "verified_official_double_quant_paired_states",
+  "scope": "10 matched state-0 outcomes for the same official checkpoint; not a success-rate estimate",
+  "source_logs": {
+    "double_quant_false_full_suite": {
+      "path": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_04-00_47_39--official_full_500_nf4_seed7_20261004.txt",
+      "bytes": 165861,
+      "sha256": "281182c6fc9fd6ab6e76abd2b99f47314eeb5ea11436e2c06556a3531a4d9901"
+    },
+    "double_quant_true_paired": {
+      "path": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_04-08_41_48--official_dqtrue_state0_pair_seed7_20261004.txt",
+      "bytes": 4822,
+      "sha256": "f0d1e7534ccdcc315f5e730160cfaa2c334c9c9338a240b59a10fb72e0d7baaf"
+    }
+  },
+  "checkpoint": {
+    "path": "/home/yyz/openvla/cache/official_libero_spatial",
+    "revision": "962318cec55ac10993ff0f5f43eda9a270b4c873",
+    "manifest_total_bytes": 15085047523
+  },
+  "shared_settings": {
+    "model_family": "openvla",
+    "task_suite_name": "libero_spatial",
+    "seed": 7,
+    "initial_state_offset": 0,
+    "center_crop": true,
+    "load_in_4bit": true,
+    "load_in_8bit": false,
+    "prepare_for_kbit_inference": false,
+    "fail_fast": true
+  },
+  "allowed_config_differences": [
+    "bnb_double_quant",
+    "num_trials_per_task",
+    "run_id_note",
+    "task_ids"
+  ],
+  "observed_config_differences": {
+    "bnb_double_quant": {
+      "double_quant_false": false,
+      "double_quant_true": true
+    },
+    "num_trials_per_task": {
+      "double_quant_false": 50,
+      "double_quant_true": 1
+    },
+    "run_id_note": {
+      "double_quant_false": "official_full_500_nf4_seed7_20261004",
+      "double_quant_true": "official_dqtrue_state0_pair_seed7_20261004"
+    },
+    "task_ids": {
+      "double_quant_false": null,
+      "double_quant_true": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ]
+    }
+  },
+  "arms": {
+    "double_quant_false": false,
+    "double_quant_true": true
+  },
+  "evaluator_code": {
+    "git_revision": "70a33468eeb3437fe1724daabe50d042971382d8",
+    "nf4_bf16_loader_file": "/home/yyz/openvla/experiments/robot/openvla_utils.py",
+    "nf4_bf16_loader_sha256": "df4b4a4a54896825be3cb0500a02f1fa2afe98d39f9f4b9c9f7d25a8ed049b5e",
+    "runtime_log_omits_loader_banner": true
+  },
+  "totals": {
+    "paired_states": 10,
+    "double_quant_false_successes": 8,
+    "double_quant_true_successes": 8,
+    "both_success": 8,
+    "false_only_success": 0,
+    "true_only_success": 0,
+    "both_failure": 2
+  },
+  "per_task": [
+    {
+      "task_id": 0,
+      "canonical_task": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 1,
+      "canonical_task": "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 2,
+      "canonical_task": "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": false,
+      "double_quant_true_success": false,
+      "outcome": "both_failure"
+    },
+    {
+      "task_id": 3,
+      "canonical_task": "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 4,
+      "canonical_task": "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 5,
+      "canonical_task": "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 6,
+      "canonical_task": "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 7,
+      "canonical_task": "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": false,
+      "double_quant_true_success": false,
+      "outcome": "both_failure"
+    },
+    {
+      "task_id": 8,
+      "canonical_task": "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    },
+    {
+      "task_id": 9,
+      "canonical_task": "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate",
+      "initial_state_index": 0,
+      "double_quant_false_success": true,
+      "double_quant_true_success": true,
+      "outcome": "both_success"
+    }
+  ],
+  "checks": {
+    "full_suite_complete_500": true,
+    "paired_run_complete_10": true,
+    "canonical_task_ids_and_order_match": true,
+    "state_zero_ranges_match": true,
+    "same_checkpoint_and_shared_inference_settings": true,
+    "shared_evaluator_source_pins_nf4_bf16_compute": true,
+    "only_double_quant_and_eval_window_keys_differ": true,
+    "full_suite_log_matches_independent_audit": true,
+    "evaluator_revision_matches_full_suite_audit": true,
+    "checkpoint_revision_matches_manifest": true,
+    "no_runtime_errors": true
+  },
+  "task_map_source": {
+    "file": "/home/yyz/LIBERO/libero/libero/benchmark/libero_suite_task_map.py",
+    "sha256": "0c950df0a785aa55de968bb38ccd865d2017f71ddbe6f48cfd05ac0742b6d62d",
+    "libero_git_revision": "8f1084e3132a39270c3a13ebe37270a43ece2a01"
+  }
+}

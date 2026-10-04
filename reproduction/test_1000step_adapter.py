@@ -13,7 +13,7 @@ BASE_MODEL = "openvla/openvla-7b"
 REPO_DIR = Path(__file__).resolve().parent.parent
 
 ADAPTER = str(
-    REPO_DIR / "adapter-tmp/libero_spatial_1000step/"
+    REPO_DIR / "adapter-tmp/libero_spatial_12episode_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug"
 )
@@ -21,7 +21,7 @@ ADAPTER = str(
 DEVICE = "cuda:0"
 
 print("=" * 70)
-print("OpenVLA 1000-step QLoRA adapter smoke test")
+print("OpenVLA 12-episode / 1000-step QLoRA adapter smoke test")
 print("=" * 70)
 
 print("\n[1/5] Loading processor...")
@@ -54,7 +54,7 @@ base_model = AutoModelForVision2Seq.from_pretrained(
 
 print(f"Base loaded. VRAM allocated: " f"{torch.cuda.memory_allocated() / 1024**3:.2f} GB")
 
-print("\n[3/5] Loading 1000-step LoRA adapter...")
+print("\n[3/5] Loading 12-episode / 1000-step LoRA adapter...")
 print("Adapter:", ADAPTER)
 
 model = PeftModel.from_pretrained(
@@ -118,5 +118,5 @@ print(action.shape)
 print(f"\nPeak VRAM: " f"{torch.cuda.max_memory_allocated() / 1024**3:.2f} GB")
 
 print("\n" + "=" * 70)
-print("SUCCESS: 1000-step QLoRA adapter loaded and inference completed")
+print("SUCCESS: 12-episode / 1000-step QLoRA adapter loaded and inference completed")
 print("=" * 70)

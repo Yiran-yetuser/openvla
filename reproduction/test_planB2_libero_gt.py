@@ -5,6 +5,7 @@ import random
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
+import tensorflow_datasets as tfds
 import torch
 
 from PIL import Image
@@ -24,15 +25,18 @@ DATA_DIR = os.environ.get(
     "LIBERO_DATA_DIR",
     str(Path.home() / "modified_libero_rlds/libero_spatial_no_noops/1.0.0"),
 )
+DATASET_NAME = "libero_spatial_no_noops"
+EVAL_EPISODE_START = int(os.environ.get("OPENVLA_EVAL_EPISODE_START", "12"))
+EVAL_EPISODES = int(os.environ.get("OPENVLA_EVAL_EPISODES", "4"))
 
 ADAPTER_DIR = (
-    REPO_DIR / "adapter-tmp/libero_spatial_1000step/"
+    REPO_DIR / "adapter-tmp/libero_spatial_12episode_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug"
 )
 
 STATS_FILE = (
-    REPO_DIR / "runs/libero_spatial_1000step/"
+    REPO_DIR / "runs/libero_spatial_12episode_1000step/"
     "openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+"
     "lora-r32+dropout-0.0+q-4bit--image_aug/"
     "dataset_statistics.json"
@@ -63,6 +67,7 @@ print("GPU:", torch.cuda.get_device_name(0))
 
 if torch.cuda.is_available():
     print("VRAM:", round(torch.cuda.get_device_properties(0).total_memory / 1024**3, 2), "GB")
+    torch.cuda.empty_cache()
 
 
 # ============================================================
@@ -128,38 +133,13 @@ def unnormalize_action(normalized):
 # ============================================================
 
 
-def parse_episode(path):
-    ds = tf.data.TFRecordDataset(path)
-
-    raw = next(iter(ds.take(1)))
-
-    example = tf.train.Example()
-    example.ParseFromString(raw.numpy())
-
-    features = example.features.feature
-
-    # Images
-    image_bytes = list(features["steps/observation/image"].bytes_list.value)
-
-    wrist_bytes = list(features["steps/observation/wrist_image"].bytes_list.value)
-
-    # Language
-    language_bytes = list(features["steps/language_instruction"].bytes_list.value)
-
-    # Actions
-    action_values = np.asarray(features["steps/action"].float_list.value, dtype=np.float32)
-
-    num_steps = len(image_bytes)
-
-    actions = action_values.reshape(num_steps, 7)
-
-    instructions = [x.decode("utf-8", errors="replace") for x in language_bytes]
-
+def parse_episode(example):
+    steps = list(example["steps"].as_numpy_iterator())
     return {
-        "images": image_bytes,
-        "wrist_images": wrist_bytes,
-        "instructions": instructions,
-        "actions": actions,
+        "images": [step["observation"]["image"] for step in steps],
+        "wrist_images": [step["observation"]["wrist_image"] for step in steps],
+        "instructions": [step["language_instruction"].decode("utf-8", errors="replace") for step in steps],
+        "actions": np.asarray([step["action"] for step in steps], dtype=np.float32),
     }
 
 
@@ -167,12 +147,16 @@ def parse_episode(path):
 # Collect candidate samples
 # ============================================================
 
-files = sorted(glob.glob(os.path.join(DATA_DIR, "libero_spatial-train.tfrecord-*")))
+dataset_root = Path(DATA_DIR).parents[1]
+split = f"train[{EVAL_EPISODE_START}:{EVAL_EPISODE_START + EVAL_EPISODES}]"
+dataset = tfds.load(
+    DATASET_NAME,
+    data_dir=str(dataset_root),
+    split=split,
+    shuffle_files=False,
+)
 
-print("\nTFRecord files:", len(files))
-
-if not files:
-    raise RuntimeError("No TFRecord files found.")
+print("\nTFDS split:", split)
 
 
 # ============================================================
@@ -183,12 +167,10 @@ episodes = []
 
 print("\nReading episode metadata...")
 
-for idx, path in enumerate(files):
-    print(f"  [{idx + 1:02d}/{len(files):02d}] " f"{os.path.basename(path)}")
-
-    episode = parse_episode(path)
-
-    episodes.append((path, episode))
+for idx, example in enumerate(dataset):
+    print(f"  [{idx + 1:02d}/{EVAL_EPISODES:02d}] episode {EVAL_EPISODE_START + idx}")
+    episode = parse_episode(example)
+    episodes.append((f"episode-{EVAL_EPISODE_START + idx:04d}", episode))
 
 print("\nEpisodes loaded:", len(episodes))
 
@@ -268,7 +250,7 @@ base_model = AutoModelForVision2Seq.from_pretrained(
     low_cpu_mem_usage=True,
     trust_remote_code=True,
     local_files_only=True,
-    device_map="auto",
+    device_map={"": 0},
 )
 
 base_model.eval()
@@ -395,18 +377,26 @@ for idx, sample in enumerate(samples):
 
     instruction = episode["instructions"][t]
 
-    gt_action = episode["actions"][t]
+    gt_action = episode["actions"][t].copy()
+    # Align with the OpenVLA dataset transform: raw -1=open/+1=close -> 1=open/0=close.
+    # These legacy CSV metrics are in policy-output space, NOT simulator-command space.
+    gt_action[-1] = 1 - np.clip(gt_action[-1], 0, 1)
 
-    image = Image.open(BytesIO(image_bytes)).convert("RGB")
+    if isinstance(image_bytes, np.ndarray):
+        image = Image.fromarray(image_bytes).convert("RGB")
+    else:
+        image = Image.open(BytesIO(image_bytes)).convert("RGB")
 
     print(f"\n[{idx + 1:02d}/{len(samples):02d}] " f"t={t} | {instruction}")
 
-    # Base
-    base_action, base_norm = predict_model(
-        base_model,
-        image,
-        instruction,
-    )
+    # PeftModel.from_pretrained wraps base_model in place. Disable the adapter
+    # here so this prediction is the genuine base-model baseline.
+    with lora_model.disable_adapter():
+        base_action, base_norm = predict_model(
+            lora_model,
+            image,
+            instruction,
+        )
 
     # LoRA
     lora_action, lora_norm = predict_model(

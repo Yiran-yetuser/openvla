@@ -1,0 +1,64 @@
+{
+  "model": "openvla/openvla-7b-finetuned-libero-spatial",
+  "revision": "962318cec55ac10993ff0f5f43eda9a270b4c873",
+  "total_bytes": 15085047523,
+  "files": [
+    {
+      "path": "added_tokens.json",
+      "bytes": 21
+    },
+    {
+      "path": "config.json",
+      "bytes": 3508
+    },
+    {
+      "path": "dataset_statistics.json",
+      "bytes": 2109
+    },
+    {
+      "path": "generation_config.json",
+      "bytes": 136
+    },
+    {
+      "path": "model-00001-of-00004.safetensors",
+      "bytes": 4925122448
+    },
+    {
+      "path": "model-00002-of-00004.safetensors",
+      "bytes": 4947392496
+    },
+    {
+      "path": "model-00003-of-00004.safetensors",
+      "bytes": 4947417456
+    },
+    {
+      "path": "model-00004-of-00004.safetensors",
+      "bytes": 262668432
+    },
+    {
+      "path": "model.safetensors.index.json",
+      "bytes": 94764
+    },
+    {
+      "path": "preprocessor_config.json",
+      "bytes": 1690
+    },
+    {
+      "path": "special_tokens_map.json",
+      "bytes": 552
+    },
+    {
+      "path": "tokenizer.json",
+      "bytes": 1842976
+    },
+    {
+      "path": "tokenizer.model",
+      "bytes": 499723
+    },
+    {
+      "path": "tokenizer_config.json",
+      "bytes": 1212
+    }
+  ],
+  "status": "downloaded_not_evaluated"
+}

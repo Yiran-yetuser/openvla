@@ -1,0 +1,263 @@
+{
+  "schema_version": 1,
+  "status": "completed_loader_difference_requires_diagnosis",
+  "independent_verification_status": "verified_clean_task_extension",
+  "new_updates": 150,
+  "parent_updates": 50,
+  "loss_records_verified": 150,
+  "milestones": [
+    50,
+    100,
+    150,
+    200
+  ],
+  "train_episodes": [
+    185,
+    343,
+    79,
+    110,
+    72,
+    400,
+    75,
+    113
+  ],
+  "validation_episodes": [
+    394,
+    212
+  ],
+  "training_frames": 992,
+  "validation_frames": 246,
+  "training_peak_allocated_gib": 8.760642051696777,
+  "parent_snapshot_unchanged": true,
+  "base_files_unchanged": true,
+  "partial_checkpoints": 0,
+  "snapshot_sha256": {
+    "50": {
+      "adapter_model.safetensors": "d419ec119bfac0dacc301d55950d0c97bd1a6f84e9ae6cf336c5fb35c1a04c54",
+      "adapter_config.json": "c31cb9ab2a7f324da75c392dc32c3355ccc67ed4838543bcd40761a3b42bb3e9",
+      "dataset_statistics.json": "45d1b4f0b28a87bce60f5c2f4f5c22978a00668e77723da06eaea7ecd319c022",
+      "optimizer_rng.pt": "7759416d6a8793060fe20f55cbed3fc7de6d8e55864185d34731e16ddc804002",
+      "evaluation.json": "9abea19982ff9d49feeb3d34f955384123ad65f323ec2bc446cadd20b1acbbd8"
+    },
+    "100": {
+      "adapter_model.safetensors": "28bf83103cf4d25a7a5d37606b6807f7d966b05eb7bfd2ca7054f315e29ba383",
+      "adapter_config.json": "c31cb9ab2a7f324da75c392dc32c3355ccc67ed4838543bcd40761a3b42bb3e9",
+      "dataset_statistics.json": "45d1b4f0b28a87bce60f5c2f4f5c22978a00668e77723da06eaea7ecd319c022",
+      "optimizer_rng.pt": "dced541449e618e7bc5f56719c0c0efa763f1073ea184de3895714ba563ad5f1",
+      "evaluation.json": "c87e4bc3f795ab475bb78bbc0acfb09dd757e8c751d49134ac7d2cc905e2788e"
+    },
+    "150": {
+      "adapter_model.safetensors": "6692d8ba9253410e2f388ad6a21d056af5f5aa450e57fe1b59210eb184b2cba6",
+      "adapter_config.json": "c31cb9ab2a7f324da75c392dc32c3355ccc67ed4838543bcd40761a3b42bb3e9",
+      "dataset_statistics.json": "45d1b4f0b28a87bce60f5c2f4f5c22978a00668e77723da06eaea7ecd319c022",
+      "optimizer_rng.pt": "a4a268e79bf24d9e144b5676a7ce356f86b4d80f42c55f2a8c1854a73e32a3bf",
+      "evaluation.json": "3dcaec2db3a88241231ccbd335bd43e3d290681d17eab5c57ceb92a2da7552a2"
+    },
+    "200": {
+      "adapter_model.safetensors": "65592a64d5adf0ceac526d7dcce5a6973e936990c4c739a06f47b28c7fd3676a",
+      "adapter_config.json": "c31cb9ab2a7f324da75c392dc32c3355ccc67ed4838543bcd40761a3b42bb3e9",
+      "dataset_statistics.json": "45d1b4f0b28a87bce60f5c2f4f5c22978a00668e77723da06eaea7ecd319c022",
+      "optimizer_rng.pt": "636fc142739fe1b2e0d31bd9e585d83c7684c0d28482cc08130638c61dd5069c",
+      "evaluation.json": "9584fac7e94b57287519e7dc5f3301f6f3a5d56ee0ea506a27378473e1a94c24"
+    }
+  },
+  "evaluations": [
+    {
+      "step": 50,
+      "train": {
+        "teacher_frames": 24,
+        "teacher_loss": 2.9982361793518066,
+        "teacher_token_accuracy": 0.3214285714285714,
+        "autoregressive_frames": 24,
+        "autoregressive_motion_mae": 0.13242897197339407,
+        "autoregressive_normalized_l1": 0.22071415964683352,
+        "gripper_correct": 24
+      },
+      "validation": {
+        "teacher_frames": 246,
+        "teacher_loss": 3.2517176023343715,
+        "teacher_token_accuracy": 0.326945412311266,
+        "autoregressive_frames": 6,
+        "autoregressive_motion_mae": 0.1325562699425454,
+        "autoregressive_normalized_l1": 0.22682199582872906,
+        "gripper_correct": 6
+      }
+    },
+    {
+      "step": 100,
+      "train": {
+        "teacher_frames": 24,
+        "teacher_loss": 2.324220518271128,
+        "teacher_token_accuracy": 0.4464285714285714,
+        "autoregressive_frames": 24,
+        "autoregressive_motion_mae": 0.06978243343925526,
+        "autoregressive_normalized_l1": 0.12923359704013834,
+        "gripper_correct": 24
+      },
+      "validation": {
+        "teacher_frames": 246,
+        "teacher_loss": 3.397455396690989,
+        "teacher_token_accuracy": 0.33972125435540074,
+        "autoregressive_frames": 6,
+        "autoregressive_motion_mae": 0.15503841654525377,
+        "autoregressive_normalized_l1": 0.32843698202316374,
+        "gripper_correct": 4
+      }
+    },
+    {
+      "step": 150,
+      "train": {
+        "teacher_frames": 24,
+        "teacher_loss": 1.8724840482076008,
+        "teacher_token_accuracy": 0.5059523809523809,
+        "autoregressive_frames": 24,
+        "autoregressive_motion_mae": 0.06686916707123468,
+        "autoregressive_normalized_l1": 0.12133955521313385,
+        "gripper_correct": 22
+      },
+      "validation": {
+        "teacher_frames": 246,
+        "teacher_loss": 3.8209934845203306,
+        "teacher_token_accuracy": 0.321718931475029,
+        "autoregressive_frames": 6,
+        "autoregressive_motion_mae": 0.13107701363520033,
+        "autoregressive_normalized_l1": 0.24361478700667197,
+        "gripper_correct": 6
+      }
+    },
+    {
+      "step": 200,
+      "train": {
+        "teacher_frames": 24,
+        "teacher_loss": 0.7928961540261904,
+        "teacher_token_accuracy": 0.8154761904761904,
+        "autoregressive_frames": 24,
+        "autoregressive_motion_mae": 0.012484893028161618,
+        "autoregressive_normalized_l1": 0.02792720475366046,
+        "gripper_correct": 24
+      },
+      "validation": {
+        "teacher_frames": 246,
+        "teacher_loss": 4.857861716572831,
+        "teacher_token_accuracy": 0.28977932636469217,
+        "autoregressive_frames": 6,
+        "autoregressive_motion_mae": 0.104560883108494,
+        "autoregressive_normalized_l1": 0.1719600206747776,
+        "gripper_correct": 6
+      }
+    }
+  ],
+  "production_loader": {
+    "training_context": "training_BF16_autocast",
+    "production_context": "production_no_autocast",
+    "production_actions_equal": false,
+    "split_comparison": {
+      "train": {
+        "rows": 24,
+        "exact_action_rows": 22,
+        "mismatch_rows": 2
+      },
+      "validation": {
+        "rows": 6,
+        "exact_action_rows": 6,
+        "mismatch_rows": 0
+      }
+    },
+    "mismatches": [
+      {
+        "split": "train",
+        "episode_index": 113,
+        "timestep": 0,
+        "image_sha256_same": true,
+        "action_dimensions_0based": [
+          0,
+          3,
+          4
+        ],
+        "max_abs_action_delta": 0.34305903481034683,
+        "training_teacher_predicted_tokens": [
+          31810,
+          31918,
+          31868,
+          31874,
+          31865,
+          31814,
+          31744
+        ],
+        "production_teacher_predicted_tokens": [
+          31868,
+          31918,
+          31868,
+          31874,
+          31865,
+          31814,
+          31744
+        ],
+        "teacher_target_tokens": [
+          31868,
+          31918,
+          31868,
+          31874,
+          31865,
+          31814,
+          31744
+        ],
+        "teacher_token_differences_0based": [
+          0
+        ]
+      },
+      {
+        "split": "train",
+        "episode_index": 113,
+        "timestep": 122,
+        "image_sha256_same": true,
+        "action_dimensions_0based": [
+          5
+        ],
+        "max_abs_action_delta": 0.0019556302843140583,
+        "training_teacher_predicted_tokens": [
+          31899,
+          31816,
+          31857,
+          31874,
+          31928,
+          31821,
+          31744
+        ],
+        "production_teacher_predicted_tokens": [
+          31899,
+          31816,
+          31857,
+          31874,
+          31928,
+          31821,
+          31744
+        ],
+        "teacher_target_tokens": [
+          31899,
+          31816,
+          31857,
+          31874,
+          31915,
+          31821,
+          31744
+        ],
+        "teacher_token_differences_0based": []
+      }
+    ],
+    "autoregressive_token_ids_saved": false
+  },
+  "source_result": "reproduction/results/clean_task_extend_v1.json",
+  "source_result_sha256": "d3f25c4c8ef6e5302b64dedf182d4ee183bef3d5f504b39210c306fbcdd2db0f",
+  "source_result_bytes": 1092915,
+  "source_verification": "reproduction/results/clean_task_extend_verification_v1.json",
+  "source_verification_sha256": "b5623a000d6bdcb5cb5f056b3828fada84a3d85788c1fcd1c01b0c72c0dcded0",
+  "source_verification_bytes": 1105193,
+  "limits": [
+    "One task, one seed, eight training and two episode-isolated validation episodes.",
+    "Validation has two episodes; its frames are not independent tasks.",
+    "Teacher-forced validation covers 246 frames; autoregressive validation covers six fixed stage frames.",
+    "No simulator rollout, closed-loop success rate, or full 500-rollout evaluation.",
+    "Loader discrepancy is measured but its causal mechanism is not established."
+  ]
+}

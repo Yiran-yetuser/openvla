@@ -1,0 +1,10 @@
+{
+  "status": "failed_before_episode_match",
+  "script": "reproduction/audit_expert_correspondence.py",
+  "error": "TypeError: int object is not iterable in selection comprehension",
+  "diagnosis": "selection contains train/validation lists plus count/string metadata. Iterate explicitly over train and validation partitions; retain complete fingerprint and exact action matching checks.",
+  "new_rollouts": 0,
+  "optimizer_updates": 0,
+  "source_modified": false,
+  "retry_scope": "one CPU-only correspondence retry after regression test"
+}

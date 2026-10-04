@@ -1,0 +1,566 @@
+{
+  "schema_version": 1,
+  "checkpoint": {
+    "kind": "local NF4 LoRA adapter from the 432-episode, 3500-update approximate full-data reproduction",
+    "adapter_path": "/home/yyz/openvla/adapter-tmp/libero_spatial_full_paper/openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+lora-r32+dropout-0.0+q-4bit--image_aug",
+    "adapter_model_sha256_current": "493e3388a72106916cf0bc52d3f2122345a04bcc1dc7d9071b7cabbe4b079259",
+    "adapter_model_sha256_recorded_at_old_launch": false,
+    "adapter_model_filesystem_times_local": {
+      "birth": "2026-09-22T13:58:16+08:00",
+      "mtime": "2026-09-22T13:58:16+08:00",
+      "ctime": "2026-09-22T13:58:16+08:00"
+    },
+    "adapter_config_sha256_current": "0fae9c8b32b63b7a87f6766ff64ec2cd62bd9c707f819b72b398f830a0518697",
+    "dataset_statistics_sha256_current": "630b81f3d0797e7eb53f6007740b6a67fe6e447873c8aaabbc7f896e0577a758",
+    "configuration_file_times_precede_both_evaluations": true
+  },
+  "base_model": {
+    "repo_id": "openvla/openvla-7b",
+    "requested_revision": "local cached main ref in offline mode",
+    "resolved_cached_revision": "47a0ec7fc4ec123775a391911046cf33cf9ed83f",
+    "revision_evidence": "HF cache ref and adapter config revision metadata predate both runs; neither launch log recorded the resolved revision explicitly"
+  },
+  "local_training_run": {
+    "code_commit": "a6e4994",
+    "python": "3.10.20",
+    "transformers": "4.40.1",
+    "dataset_trajectories": 432,
+    "dataset_transitions": 52970,
+    "optimizer_updates": 3500,
+    "effective_batch_size": 16,
+    "approximate_sample_presentations": 56000,
+    "approximate_transition_count_passes": 1.057,
+    "learning_rate": 0.0005,
+    "lora_rank": 32,
+    "quantization": "NF4 QLoRA",
+    "double_quant": false,
+    "image_augmentation": "image_aug enabled",
+    "last_wandb_training_monitor": {
+      "loss_approx": 2.48,
+      "token_accuracy_approx": 0.42,
+      "scope": "training monitor only; not held-out accuracy or closed-loop success"
+    }
+  },
+  "evaluation_configuration": {
+    "suite": "libero_spatial",
+    "seed": 7,
+    "trials_per_task": 50,
+    "center_crop": true,
+    "load_in_4bit": true,
+    "quant_type": "nf4",
+    "compute_dtype": "bfloat16",
+    "double_quant": true,
+    "prepare_for_kbit_inference": false,
+    "policy_action_sampling": false,
+    "task_state_selection": "Both runner versions use canonical task IDs, get_task_init_states(task_id), and initial_states[episode_idx] for episodes 0-49.",
+    "benchmark_state_loader_note": "The LIBERO checkout has a pre-existing local change to torch.load(..., weights_only=False) for trusted numpy init-state files. Its file timestamp is 2026-09-21, before both evaluations; it does not change task mapping or initial-state selection.",
+    "noted_code_path_difference": "The completion runner wraps predict_action in torch.inference_mode; the earlier runner relies on the model generation path. Both call predict_action with do_sample=False and use the same evaluation configuration."
+  },
+  "official_recipe_reference": {
+    "source": "https://huggingface.co/openvla/openvla-7b-finetuned-libero-spatial",
+    "optimizer_steps": 50000,
+    "global_batch_size": 128,
+    "training_quantization": "none",
+    "image_augmentation": "random crop and color jitter"
+  },
+  "official_checkpoint_control": {
+    "local_checkpoint_available": true,
+    "model": "openvla/openvla-7b-finetuned-libero-spatial",
+    "checkpoint_path": "/home/yyz/openvla/cache/official_libero_spatial",
+    "revision": "962318cec55ac10993ff0f5f43eda9a270b4c873",
+    "manifest": "reproduction/results/official_checkpoint_manifest.json",
+    "manifest_bytes": 15085047523,
+    "status": "verified_complete_official_checkpoint_single_seed_control",
+    "role": "separate same-evaluator full-suite control; not part of the local-adapter score",
+    "service_unit": "openvla-official-eval-20261004.service",
+    "service_log": "/tmp/openvla_official_eval_20261004.service.log",
+    "requested_configuration": {
+      "suite": "libero_spatial",
+      "task_ids": null,
+      "trials_per_task": 50,
+      "state_index_range_per_task": [
+        0,
+        50
+      ],
+      "seed": 7,
+      "center_crop": true,
+      "load_in_4bit": true,
+      "quant_type": "nf4",
+      "compute_dtype": "bfloat16",
+      "double_quant": false,
+      "prepare_for_kbit_inference": false,
+      "fail_fast": true
+    },
+    "started_local_time": "2026-10-04 00:47 Asia/Shanghai",
+    "first_background_shell_attempt": "ended before model load or any rollout; no evaluation log created",
+    "audit_target": "reproduction/results/official_full_eval_audit_v1.json",
+    "paper_comparison_limit": "single-seed NF4 control; not the paper BF16 three-seed mean",
+    "eval_log": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_04-00_47_39--official_full_500_nf4_seed7_20261004.txt",
+    "comparison_scope_note": "Local-adapter 500-trial result used double_quant=True; this official full-suite run uses double_quant=False. Treat it as a separate NF4 configuration control, not a checkpoint-only comparison.",
+    "paired_quantization_followup": {
+      "planned": false,
+      "completed": true,
+      "checkpoint": "same official checkpoint and revision",
+      "state_indices": "task IDs 0-9, initial state index 0 for each task",
+      "arms": [
+        "double_quant=False outcomes from the first state of the audited full run",
+        "double_quant=True one-rollout-per-task run"
+      ],
+      "service_unit": "openvla-official-dqtrue-state0-20261004.service",
+      "service_result": "success",
+      "exit_code": 0,
+      "eval_log": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_04-08_41_48--official_dqtrue_state0_pair_seed7_20261004.txt",
+      "eval_log_sha256": "f0d1e7534ccdcc315f5e730160cfaa2c334c9c9338a240b59a10fb72e0d7baaf",
+      "audit_file": "reproduction/results/official_dq_pair_audit_v1.json",
+      "audit_status": "verified_official_double_quant_paired_states",
+      "audit_checks_all_passed": true,
+      "totals": {
+        "paired_states": 10,
+        "double_quant_false_successes": 8,
+        "double_quant_true_successes": 8,
+        "both_success": 8,
+        "false_only_success": 0,
+        "true_only_success": 0,
+        "both_failure": 2
+      },
+      "per_task": [
+        {
+          "task_id": 0,
+          "canonical_task": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 1,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 2,
+          "canonical_task": "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": false,
+          "double_quant_true_success": false,
+          "outcome": "both_failure"
+        },
+        {
+          "task_id": 3,
+          "canonical_task": "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 4,
+          "canonical_task": "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 5,
+          "canonical_task": "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 6,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 7,
+          "canonical_task": "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": false,
+          "double_quant_true_success": false,
+          "outcome": "both_failure"
+        },
+        {
+          "task_id": 8,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        },
+        {
+          "task_id": 9,
+          "canonical_task": "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate",
+          "initial_state_index": 0,
+          "double_quant_false_success": true,
+          "double_quant_true_success": true,
+          "outcome": "both_success"
+        }
+      ],
+      "evaluator_code": {
+        "git_revision": "70a33468eeb3437fe1724daabe50d042971382d8",
+        "nf4_bf16_loader_file": "/home/yyz/openvla/experiments/robot/openvla_utils.py",
+        "nf4_bf16_loader_sha256": "df4b4a4a54896825be3cb0500a02f1fa2afe98d39f9f4b9c9f7d25a8ed049b5e",
+        "runtime_log_omits_loader_banner": true
+      },
+      "runtime_log_omits_loader_banner": true,
+      "interpretation_limit": "10 matched state-0 outcomes for the same official checkpoint; not a success-rate estimate"
+    },
+    "exit_code": 0,
+    "eval_log_sha256": "281182c6fc9fd6ab6e76abd2b99f47314eeb5ea11436e2c06556a3531a4d9901",
+    "audit_status": "verified_complete_official_checkpoint_single_seed_control",
+    "audit_file": "reproduction/results/official_full_eval_audit_v1.json",
+    "audit_checks_all_passed": true,
+    "metric": {
+      "suite": "libero_spatial",
+      "episodes": 500,
+      "successes": 413,
+      "success_rate": 0.826,
+      "per_task": [
+        {
+          "task_id": 0,
+          "canonical_task": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 42,
+          "success_rate": 0.84
+        },
+        {
+          "task_id": 1,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 46,
+          "success_rate": 0.92
+        },
+        {
+          "task_id": 2,
+          "canonical_task": "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 43,
+          "success_rate": 0.86
+        },
+        {
+          "task_id": 3,
+          "canonical_task": "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 43,
+          "success_rate": 0.86
+        },
+        {
+          "task_id": 4,
+          "canonical_task": "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 34,
+          "success_rate": 0.68
+        },
+        {
+          "task_id": 5,
+          "canonical_task": "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 44,
+          "success_rate": 0.88
+        },
+        {
+          "task_id": 6,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 47,
+          "success_rate": 0.94
+        },
+        {
+          "task_id": 7,
+          "canonical_task": "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 41,
+          "success_rate": 0.82
+        },
+        {
+          "task_id": 8,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 40,
+          "success_rate": 0.8
+        },
+        {
+          "task_id": 9,
+          "canonical_task": "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 33,
+          "success_rate": 0.66
+        }
+      ]
+    },
+    "evaluator_project_git_revision": "70a33468eeb3437fe1724daabe50d042971382d8",
+    "task_map_source": {
+      "file": "/home/yyz/LIBERO/libero/libero/benchmark/libero_suite_task_map.py",
+      "sha256": "0c950df0a785aa55de968bb38ccd865d2017f71ddbe6f48cfd05ac0742b6d62d",
+      "libero_git_revision": "8f1084e3132a39270c3a13ebe37270a43ece2a01"
+    },
+    "final_host_verification": {
+      "service_active_after_exit": false,
+      "service_result": "success",
+      "exit_code": 0,
+      "process_running_at_final_check": false,
+      "completed_episodes": 500,
+      "runtime_errors": []
+    },
+    "host_verification_at_intermediate_snapshot": {
+      "service_active_at_check": true,
+      "model_loaded": true,
+      "first_rollout_recorded": true,
+      "partial_snapshot_at_check": {
+        "completed_episodes": 3,
+        "task_id": 0,
+        "successes": 2,
+        "success_rate": 0.6666666666666666
+      },
+      "partial_snapshot_is_not_a_final_metric": true
+    }
+  },
+  "separate_existing_controls": {
+    "same_24_training_diagnostic_frames": {
+      "evidence_file": "reproduction/results/official_diagnostic_v1.json",
+      "frame_identity": "same 24 image hashes, episode/step identities, task instruction, and target actions as the local full-data diagnostic",
+      "quantization": "NF4, bfloat16 compute, double_quant=false for both checkpoints",
+      "local_adapter_teacher_token_accuracy": 0.3631,
+      "official_checkpoint_teacher_token_accuracy": 0.9404761904761906,
+      "local_adapter_motion_mae_6d": 0.085184,
+      "official_checkpoint_motion_mae_6d": 0.013160740705390741,
+      "scope": "training-distribution diagnostic frames; not held-out generalization or LIBERO suite success rate"
+    },
+    "task0_fixed_state_trace": {
+      "evidence_file": "reproduction/results/official_task0_trace_summary.json",
+      "official_checkpoint_successes": 1,
+      "episodes": 2,
+      "scope": "two fixed states only; not a suite-level success estimate"
+    }
+  },
+  "configuration_mismatches": [
+    "Training used double_quant=false, while both evaluation launches used the evaluator default double_quant=true. This is a measured configuration mismatch, not a demonstrated cause of the closed-loop result.",
+    "Local training used 3500 updates, effective batch 16, and 4-bit NF4; the official fine-tuning recipe uses 50000 steps, global batch 128, and no quantization.",
+    "The local training W&B token accuracy is a training-monitor metric; it is not held-out accuracy or LIBERO success rate.",
+    "An existing 24-frame official-checkpoint diagnostic is much stronger than the local adapter on those same training-distribution frames, and a separate official task0 control succeeds on 1/2 fixed states. These small controls support investigating local policy quality but do not replace the full-suite run or isolate a single cause."
+  ],
+  "prior_run": {
+    "code_commit": "accec890ad0b4b6b0b1be17ed57c0c7f559611e3",
+    "task_selection": "all canonical task IDs 0-9 in suite order",
+    "launch_command": "systemd-inhibit --what=idle:sleep:handle-lid-switch --why='OpenVLA full LIBERO evaluation' --mode=block env MUJOCO_GL=egl HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false /home/yyz/miniconda3/envs/openvla/bin/python /home/yyz/openvla/experiments/robot/libero/run_libero_eval.py --model_family openvla --pretrained_checkpoint /home/yyz/openvla/adapter-tmp/libero_spatial_full_paper/openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+lora-r32+dropout-0.0+q-4bit--image_aug --base_model_path openvla/openvla-7b --task_suite_name libero_spatial --num_trials_per_task 50 --center_crop True --load_in_4bit True --run_id_note full_paper_50trials_retry_20260929",
+    "seed_source": "runner default seed=7"
+  },
+  "completion_run": {
+    "code_commit": "d0ea5b408f358917b9f1f39226d98da760fa0637",
+    "task_ids": [
+      7,
+      8,
+      9
+    ],
+    "initial_state_index_ranges": {
+      "7": [
+        0,
+        50
+      ],
+      "8": [
+        0,
+        50
+      ],
+      "9": [
+        0,
+        25
+      ]
+    },
+    "rollouts_completed_before_termination": 125,
+    "termination": "SIGTERM, exit code 143; no Python exception traceback; task 9 state index 24 is the final completed record",
+    "launch_command": "systemd-inhibit --what=idle:sleep:handle-lid-switch --why='OpenVLA final LIBERO Spatial evaluation' --mode=block env MUJOCO_GL=egl HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 TOKENIZERS_PARALLELISM=false NUMBA_CACHE_DIR=/tmp/numba-openvla-final MPLCONFIGDIR=/tmp/mpl-openvla-final PYTHONPATH=/home/yyz/openvla /home/yyz/miniconda3/envs/openvla/bin/python -u /home/yyz/openvla/experiments/robot/libero/run_libero_eval.py --model_family openvla --pretrained_checkpoint /home/yyz/openvla/adapter-tmp/libero_spatial_full_paper/openvla-7b+libero_spatial_no_noops+b16+lr-0.0005+lora-r32+dropout-0.0+q-4bit--image_aug --base_model_path openvla/openvla-7b --task_suite_name libero_spatial --num_trials_per_task 50 --task_ids '[7,8,9]' --center_crop True --load_in_4bit True --seed 7 --fail_fast True --run_id_note full_paper_50trials_complete_20261003",
+    "new_log_records": [
+      "Selected task IDs: [7, 8, 9]; trials per task: 50",
+      "prepare_for_kbit_inference: False",
+      "Task suite: libero_spatial"
+    ]
+  },
+  "continuation_run": {
+    "code_commit": "70a33468eeb3437fe1724daabe50d042971382d8",
+    "source_log": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_03-23_52_18--full_paper_task9_state25_20261003.txt",
+    "task_ids": [
+      9
+    ],
+    "trials": 25,
+    "initial_state_index_range": [
+      25,
+      50
+    ],
+    "seed": 7,
+    "center_crop": true,
+    "load_in_4bit": true,
+    "bnb_double_quant": true,
+    "prepare_for_kbit_inference": false,
+    "termination": "planned bounded continuation to state indices 25-49; full config JSON written into its own run log"
+  },
+  "historical_evidence_limits": [
+    "The prior launch command and commit are recovered from its Codex session record; the prior log itself does not contain the full launch command.",
+    "The adapter path is identical in both launch commands. No adapter SHA-256 was captured at the prior launch; current digest and filesystem times are recorded separately.",
+    "The base repo ID was supplied to both offline launches. The resolved revision is supported by cached metadata that predates both runs, but was not printed into either launch log.",
+    "The completion runner adds an inference_mode wrapper; the generation call remains deterministic. This implementation difference is recorded rather than hidden."
+  ],
+  "local_full_eval": {
+    "status": "verified_complete_segmented_assembly",
+    "metric": {
+      "suite": "libero_spatial",
+      "score_episodes": 500,
+      "successes": 5,
+      "success_rate": 0.01,
+      "per_task": [
+        {
+          "task_id": 0,
+          "canonical_task": "pick_up_the_black_bowl_between_the_plate_and_the_ramekin_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 1,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_ramekin_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 1,
+          "success_rate": 0.02,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 2,
+          "canonical_task": "pick_up_the_black_bowl_from_table_center_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 3,
+          "canonical_task": "pick_up_the_black_bowl_on_the_cookie_box_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 2,
+          "success_rate": 0.04,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 4,
+          "canonical_task": "pick_up_the_black_bowl_in_the_top_drawer_of_the_wooden_cabinet_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 5,
+          "canonical_task": "pick_up_the_black_bowl_on_the_ramekin_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 6,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_cookie_box_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 2,
+          "success_rate": 0.04,
+          "source_run": "prior"
+        },
+        {
+          "task_id": 7,
+          "canonical_task": "pick_up_the_black_bowl_on_the_stove_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "completion_prefix"
+        },
+        {
+          "task_id": 8,
+          "canonical_task": "pick_up_the_black_bowl_next_to_the_plate_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "completion_prefix"
+        },
+        {
+          "task_id": 9,
+          "canonical_task": "pick_up_the_black_bowl_on_the_wooden_cabinet_and_place_it_on_the_plate",
+          "episodes": 50,
+          "successes": 0,
+          "success_rate": 0.0,
+          "source_run": "completion_prefix+continuation",
+          "state_index_ranges": [
+            [
+              0,
+              25
+            ],
+            [
+              25,
+              50
+            ]
+          ]
+        }
+      ]
+    },
+    "rollout_ledger": {
+      "actual_rollouts_executed": 532,
+      "valid_unique_score_rollouts": 500,
+      "excluded_partial_rollouts": 32,
+      "excluded_source_segment": "prior run task ID 7, episodes 1-32; replaced by fresh complete task ID 7",
+      "completion_rollouts": 150,
+      "completion_process_segments": [
+        {
+          "source": "completion_prefix",
+          "rollouts": 125,
+          "task_7_state_range": [
+            0,
+            50
+          ],
+          "task_8_state_range": [
+            0,
+            50
+          ],
+          "task_9_state_range": [
+            0,
+            25
+          ],
+          "termination": "SIGTERM, exit code 143; no Python exception traceback"
+        },
+        {
+          "source": "continuation",
+          "rollouts": 25,
+          "task_9_state_range": [
+            25,
+            50
+          ],
+          "termination": "completed normally"
+        }
+      ]
+    },
+    "source_runs": {
+      "prior": {
+        "path": "experiments/logs/EVAL-libero_spatial-openvla-2026_09_29-23_21_29--full_paper_50trials_retry_20260929.txt",
+        "bytes": 125921,
+        "sha256": "3962f67b0fb67936090e3b969dc61494693008dd7e5e51577bd3eb19b188038b"
+      },
+      "completion_prefix": {
+        "path": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_03-19_44_57--full_paper_50trials_complete_20261003.txt",
+        "bytes": 40344,
+        "sha256": "bb0008d93e24bfc04110e9017c83ab3e336498dd181da5531a64886f7ea8520c"
+      },
+      "continuation": {
+        "path": "experiments/logs/EVAL-libero_spatial-openvla-2026_10_03-23_52_18--full_paper_task9_state25_20261003.txt",
+        "bytes": 9134,
+        "sha256": "ef92e6916457764dadcedafab06bb25f6bfb604465275f19831d0c3e1edd973a"
+      }
+    },
+    "audit_file": "reproduction/results/full_eval_merged_audit_v1.json",
+    "audit_checks_all_passed": true
+  }
+}

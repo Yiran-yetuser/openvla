@@ -157,6 +157,7 @@ runs/
 adapter-tmp/
 libero_compare_100samples/
 libero_compare_results/
+experiments/logs/
 
 # Local result files
 *_action_results.csv

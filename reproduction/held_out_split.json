@@ -1,0 +1,17 @@
+{
+  "dataset": "libero_spatial_no_noops",
+  "dataset_total_episodes": 432,
+  "dataset_tfrecord_shards": 16,
+  "train_split": "train[:12]",
+  "train_episode_range": [
+    0,
+    12
+  ],
+  "held_out_split": "train[12:16]",
+  "held_out_episode_range": [
+    12,
+    16
+  ],
+  "seed": 42,
+  "strict_use": "Retrain on train[:12]; evaluate only on train[12:16]."
+}
